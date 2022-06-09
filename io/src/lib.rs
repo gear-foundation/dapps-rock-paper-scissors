@@ -63,7 +63,6 @@ impl GameStage {
         let players = description
             .anticipated_players
             .union(&description.finished_players)
-            // .cloned()
             .collect();
         Some(players)
     }

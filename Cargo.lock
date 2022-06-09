@@ -1158,7 +1158,6 @@ dependencies = [
  "gstd",
  "gtest",
  "io",
- "parity-scale-codec",
  "primitive-types",
  "scale-info",
  "sp-core-hashing",
