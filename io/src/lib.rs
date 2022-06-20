@@ -4,6 +4,63 @@ use codec::{Decode, Encode};
 use gstd::{prelude::*, ActorId};
 use scale_info::TypeInfo;
 
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
+pub enum Move {
+    Rock,
+    Paper,
+    Scissors,
+    Lizard,
+    Spock,
+}
+
+impl Move {
+    pub fn number(&self) -> char {
+        match self {
+            Move::Rock => '0',
+            Move::Paper => '1',
+            Move::Scissors => '2',
+            Move::Lizard => '3',
+            Move::Spock => '4',
+        }
+    }
+
+    pub fn new(number: char) -> Move {
+        match number {
+            '0' => Move::Rock,
+            '1' => Move::Paper,
+            '2' => Move::Scissors,
+            '3' => Move::Lizard,
+            '4' => Move::Spock,
+            _ => panic!("Unknown symbol in move"),
+        }
+    }
+
+    pub fn wins(&self, other: &Move) -> bool {
+        match self {
+            Move::Rock => match other {
+                Move::Rock | Move::Paper | Move::Spock => false,
+                Move::Scissors | Move::Lizard => true,
+            },
+            Move::Paper => match other {
+                Move::Paper | Move::Scissors | Move::Lizard => false,
+                Move::Rock | Move::Spock => true,
+            },
+            Move::Scissors => match other {
+                Move::Rock | Move::Scissors | Move::Spock => false,
+                Move::Paper | Move::Lizard => true,
+            },
+            Move::Lizard => match other {
+                Move::Rock | Move::Scissors | Move::Lizard => false,
+                Move::Paper | Move::Spock => true,
+            },
+            Move::Spock => match other {
+                Move::Paper | Move::Lizard | Move::Spock => false,
+                Move::Rock | Move::Scissors => true,
+            },
+        }
+    }
+}
+
 #[derive(Debug, Default, Encode, Decode, TypeInfo, Clone)]
 pub struct StageDescription {
     pub anticipated_players: BTreeSet<ActorId>,
@@ -47,7 +104,7 @@ impl GameStage {
         }
     }
 
-    pub fn current_players(&self) -> Option<BTreeSet<&ActorId>> {
+    pub fn current_players(&self) -> Option<BTreeSet<ActorId>> {
         let description: &StageDescription;
 
         match self {
@@ -63,6 +120,7 @@ impl GameStage {
         let players = description
             .anticipated_players
             .union(&description.finished_players)
+            .copied()
             .collect();
         Some(players)
     }
@@ -80,14 +138,21 @@ pub enum Action {
 }
 
 #[derive(Debug, Encode, Decode, TypeInfo)]
+pub enum RevealResult {
+    Continue,
+    NextRoundStarted { players: BTreeSet<ActorId> },
+    GameOver { winner: ActorId },
+}
+
+#[derive(Debug, Encode, Decode, TypeInfo)]
 pub enum Event {
     PlayerWasAdded(ActorId),
     PlayerWasRemoved(ActorId),
     LobbyPlayersListUpdated,
     BetSizeWasChanged(u128),
     SuccessfulMove(ActorId),
-    SuccessfulReveal(ActorId),
-    GameWasStopped,
+    SuccessfulReveal(RevealResult),
+    GameWasStopped(BTreeSet<ActorId>),
 }
 
 #[derive(Debug, Encode, Decode, TypeInfo)]

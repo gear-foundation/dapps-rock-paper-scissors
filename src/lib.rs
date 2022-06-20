@@ -1,57 +1,7 @@
 #![no_std]
 
-extern crate alloc;
-
-use crate::Answer::{Lizard, Paper, Rock, Scissors, Spock};
 use gstd::{debug, exec, msg, prelude::*, ActorId};
 use io::*;
-
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
-enum Answer {
-    Rock,
-    Paper,
-    Scissors,
-    Lizard,
-    Spock,
-}
-
-impl Answer {
-    fn new(number: char) -> Answer {
-        match number {
-            '0' => Rock,
-            '1' => Paper,
-            '2' => Scissors,
-            '3' => Lizard,
-            '4' => Spock,
-            _ => panic!("Unknown symbol in answer"),
-        }
-    }
-
-    fn wins(&self, other: &Answer) -> bool {
-        match self {
-            Rock => match other {
-                Rock | Paper | Spock => false,
-                Scissors | Lizard => true,
-            },
-            Paper => match other {
-                Paper | Scissors | Lizard => false,
-                Rock | Spock => true,
-            },
-            Scissors => match other {
-                Rock | Scissors | Spock => false,
-                Paper | Lizard => true,
-            },
-            Lizard => match other {
-                Rock | Scissors | Lizard => false,
-                Paper | Spock => true,
-            },
-            Spock => match other {
-                Paper | Lizard | Spock => false,
-                Rock | Scissors => true,
-            },
-        }
-    }
-}
 
 static mut RPS_GAME: Option<RPSGame> = None;
 
@@ -62,7 +12,8 @@ struct RPSGame {
     bet_size: u128,
     stage: GameStage,
     moves: BTreeMap<ActorId, String>,
-    player_throws: BTreeMap<ActorId, Answer>,
+    player_real_moves: BTreeMap<ActorId, Move>,
+    bettors: BTreeSet<ActorId>,
 }
 
 impl RPSGame {
@@ -84,20 +35,20 @@ impl RPSGame {
         }
     }
 
-    fn validate_is_not_playing_right_now(&self, player: &ActorId) {
-        if self.stage.is_player_in_game(player) {
-            panic!("This player is in game right now")
-        }
-    }
-
     fn validate_game_is_not_in_progress(&self) {
         if self.stage.game_is_in_progress() {
             panic!("Game is in progress")
         }
     }
 
-    fn validate_enough_value(&self, value: u128) {
-        if self.bet_size > value {
+    fn validate_game_is_in_progress(&self) {
+        if !self.stage.game_is_in_progress() {
+            panic!("Game is not in progress")
+        }
+    }
+
+    fn validate_bet(&self, player: &ActorId, value: u128) {
+        if !self.bettors.contains(player) && self.bet_size > value {
             panic!("Not enough money for bet")
         }
     }
@@ -129,43 +80,46 @@ impl RPSGame {
         };
     }
 
-    fn validate_throw(&self, player: &ActorId, real_move: &str) {
+    fn validate_reveal(&self, player: &ActorId, real_move: &str) {
         let saved_move = self
             .moves
             .get(player)
             .expect("Can't find a move of this player");
 
         let hash_bytes = sp_core_hashing::blake2_256(real_move.as_bytes());
-        let hash = String::from_utf8(hash_bytes.to_vec()).unwrap();
+        let hex_hash = format!("{:x?}", hash_bytes);
 
-        if &hash != saved_move {
+        if &hex_hash != saved_move {
             panic!("Player tries to cheat")
         }
     }
 
     fn add_player_in_lobby(&mut self, player: &ActorId) {
         self.validate_source_is_owner();
+        self.validate_game_is_not_in_progress();
         self.validate_there_is_no_such_player(player);
 
         self.lobby.insert(*player);
 
-        msg::reply(Event::PlayerWasAdded(*player), 0).unwrap();
+        msg::reply(Event::PlayerWasAdded(*player), 0).expect("Can't send reply");
     }
 
     fn remove_player_in_lobby(&mut self, player: &ActorId) {
         self.validate_source_is_owner();
         self.validate_there_is_such_player(player);
-        self.validate_is_not_playing_right_now(player);
+        self.validate_game_is_not_in_progress();
 
         self.lobby.remove(player);
-        msg::reply(Event::PlayerWasRemoved(*player), 0).unwrap();
+        msg::reply(Event::PlayerWasRemoved(*player), 0).expect("Can't send reply");
     }
 
     fn set_lobby_players_list(&mut self, new_list: Vec<ActorId>) {
         self.validate_source_is_owner();
         self.validate_game_is_not_in_progress();
 
-        self.lobby = BTreeSet::from_iter(new_list.into_iter())
+        self.lobby = BTreeSet::from_iter(new_list.into_iter());
+
+        msg::reply(Event::LobbyPlayersListUpdated, 0).expect("Can't send reply");
     }
 
     fn set_bet_size(&mut self, new_size: u128) {
@@ -173,11 +127,16 @@ impl RPSGame {
         self.validate_game_is_not_in_progress();
 
         self.bet_size = new_size;
+
+        msg::reply(Event::BetSizeWasChanged(new_size), 0).expect("Can't send reply");
     }
 
     fn make_move(&mut self, move_hash: String) {
-        self.validate_player_can_make_a_move(&msg::source());
-        self.validate_enough_value(msg::value());
+        let player_id = &msg::source();
+        self.validate_player_can_make_a_move(player_id);
+        self.validate_bet(player_id, msg::value());
+
+        self.clear_history_if_needed();
 
         match self.stage {
             GameStage::Preparation => self.transit_to_in_progress_stage_from_preparation(),
@@ -186,31 +145,50 @@ impl RPSGame {
         }
 
         self.save_move(&msg::source(), move_hash);
-        self.transit_to_reveal_stage_if_needed()
+        self.transit_to_reveal_stage_if_needed();
+
+        let change = self.place_bet_if_needed(player_id, msg::value());
+
+        msg::reply(Event::SuccessfulMove(*player_id), change).expect("Reply error");
     }
 
     fn reveal(&mut self, real_move: &str) {
         let player = &msg::source();
 
         self.validate_player_can_reveal(player);
-        self.validate_throw(player, real_move);
+        self.validate_reveal(player, real_move);
 
-        self.save_throw(player, real_move);
-        self.end_round_if_needed();
+        self.save_real_move(player, real_move);
+        let result = self.end_round_if_needed();
+
+        msg::reply(Event::SuccessfulReveal(result), 0).expect("Reply error");
     }
 
     fn stop_the_game(&mut self) {
         self.validate_source_is_owner();
+        self.validate_game_is_in_progress();
 
-        let players = self
-            .stage
-            .current_players()
-            .unwrap_or_else(|| self.lobby.iter().collect());
-        let part = exec::value_available() / players.len() as u128;
+        let players = if self.bettors.len() < self.lobby.len() {
+            self.bettors.iter().for_each(|player| {
+                msg::send(*player, "", self.bet_size).expect("Can't send reward");
+            });
 
-        for player in players {
-            msg::send(*player, "", part).unwrap();
-        }
+            self.bettors.clone()
+        } else {
+            let players = self.stage.current_players().expect("game is not started");
+
+            let part = exec::value_available() / players.len() as u128;
+
+            for player in players.iter() {
+                msg::send(*player, "", part).expect("Can't send reward");
+            }
+
+            players
+        };
+
+        self.stage = GameStage::Preparation;
+
+        msg::reply(Event::GameWasStopped(players), 0).expect("Reply error");
     }
 
     fn transit_to_in_progress_stage_from_preparation(&mut self) {
@@ -233,23 +211,27 @@ impl RPSGame {
         }
     }
 
-    fn end_round_if_needed(&mut self) {
+    fn end_round_if_needed(&mut self) -> RevealResult {
         if let GameStage::Reveal(reveal_description) = &self.stage {
             if reveal_description.anticipated_players.is_empty() {
                 self.end_round()
+            } else {
+                RevealResult::Continue
             }
+        } else {
+            panic!("It's not reveal stage")
         }
     }
 
-    fn end_round(&mut self) {
-        let set_of_answers = BTreeSet::from_iter(self.player_throws.values().cloned());
-        let next_round_players: BTreeSet<ActorId> = match set_of_answers.len() {
-            1 | 4 | 5 => self.player_throws.keys().cloned().collect(),
+    fn end_round(&mut self) -> RevealResult {
+        let set_of_moves = BTreeSet::from_iter(self.player_real_moves.values().cloned());
+        let next_round_players: BTreeSet<ActorId> = match set_of_moves.len() {
+            1 | 4 | 5 => self.player_real_moves.keys().cloned().collect(),
             2 | 3 => {
-                let winners = self.next_round_answers_set(set_of_answers);
-                self.player_throws
+                let winners = self.next_round_moves_set(set_of_moves);
+                self.player_real_moves
                     .iter()
-                    .filter(|(_, answer)| winners.contains(answer))
+                    .filter(|(_, users_move)| winners.contains(users_move))
                     .map(|(player, _)| player)
                     .copied()
                     .collect()
@@ -259,47 +241,54 @@ impl RPSGame {
 
         if next_round_players.len() > 1 {
             self.stage = GameStage::InProgress(StageDescription {
-                anticipated_players: next_round_players,
+                anticipated_players: next_round_players.clone(),
                 finished_players: BTreeSet::new(),
-            })
+            });
+            RevealResult::NextRoundStarted {
+                players: next_round_players,
+            }
         } else {
-            let winner = next_round_players.into_iter().last().unwrap();
-            msg::send(winner, "", exec::value_available()).unwrap();
-            self.stage = GameStage::Preparation
+            let winner = next_round_players
+                .into_iter()
+                .last()
+                .expect("Unknown winner");
+            msg::send(winner, "", exec::value_available()).expect("Can't send reward");
+            self.stage = GameStage::Preparation;
+            RevealResult::GameOver { winner }
         }
     }
 
-    fn next_round_answers_set(&self, set_of_answers: BTreeSet<Answer>) -> BTreeSet<Answer> {
+    fn next_round_moves_set(&self, set_of_moves: BTreeSet<Move>) -> BTreeSet<Move> {
         let mut wins_loses_map = BTreeMap::from_iter(
-            set_of_answers
+            set_of_moves
                 .iter()
                 .cloned()
-                .map(|answer| (answer, (0, 0))),
+                .map(|users_move| (users_move, (0, 0))),
         );
 
-        let mut iterator = set_of_answers.iter();
+        let mut iterator = set_of_moves.iter();
 
-        while let Some(a_answer) = iterator.next() {
+        while let Some(a_move) = iterator.next() {
             let cloned_iterator = iterator.clone();
 
-            for b_answer in cloned_iterator {
-                if a_answer.wins(b_answer) {
-                    wins_loses_map.get_mut(a_answer).unwrap().0 += 1;
-                    wins_loses_map.get_mut(b_answer).unwrap().1 += 1;
+            for b_move in cloned_iterator {
+                if a_move.wins(b_move) {
+                    wins_loses_map.get_mut(a_move).unwrap().0 += 1;
+                    wins_loses_map.get_mut(b_move).unwrap().1 += 1;
                 } else {
-                    wins_loses_map.get_mut(a_answer).unwrap().1 += 1;
-                    wins_loses_map.get_mut(b_answer).unwrap().0 += 1;
+                    wins_loses_map.get_mut(a_move).unwrap().1 += 1;
+                    wins_loses_map.get_mut(b_move).unwrap().0 += 1;
                 }
             }
         }
 
         let (only_wins, only_loses) = wins_loses_map.into_iter().fold(
             (BTreeSet::new(), BTreeSet::new()),
-            |(mut only_wins, mut only_loses), (answer, (wins, loses))| {
+            |(mut only_wins, mut only_loses), (users_move, (wins, loses))| {
                 if loses == 0 {
-                    only_wins.insert(answer);
+                    only_wins.insert(users_move);
                 } else if wins == 0 {
-                    only_loses.insert(answer);
+                    only_loses.insert(users_move);
                 };
 
                 (only_wins, only_loses)
@@ -309,9 +298,9 @@ impl RPSGame {
         if !only_wins.is_empty() {
             only_wins
         } else if !only_loses.is_empty() {
-            set_of_answers.difference(&only_loses).cloned().collect()
+            set_of_moves.difference(&only_loses).cloned().collect()
         } else {
-            set_of_answers
+            set_of_moves
         }
     }
 
@@ -324,11 +313,11 @@ impl RPSGame {
         }
     }
 
-    fn save_throw(&mut self, player: &ActorId, real_move: &str) {
-        let char_answer = real_move.chars().next().expect("Answer is empty");
-        let answer = Answer::new(char_answer);
+    fn save_real_move(&mut self, player: &ActorId, real_move: &str) {
+        let users_move = real_move.chars().next().expect("Move is empty");
+        let users_move = Move::new(users_move);
 
-        self.player_throws.insert(*player, answer);
+        self.player_real_moves.insert(*player, users_move);
 
         match &mut self.stage {
             GameStage::Preparation | GameStage::InProgress(_) => {}
@@ -336,6 +325,35 @@ impl RPSGame {
                 description.anticipated_players.remove(player);
                 description.finished_players.insert(*player);
             }
+        }
+    }
+
+    fn place_bet_if_needed(&mut self, player_id: &ActorId, bet: u128) -> u128 {
+        if self.bettors.contains(player_id) {
+            bet
+        } else {
+            self.bettors.insert(*player_id);
+            bet.checked_sub(self.bet_size).expect("Bet is too small")
+        }
+    }
+
+    fn clear_history_if_needed(&mut self) {
+        let mut clear_moves = || {
+            self.moves.clear();
+            self.player_real_moves.clear();
+        };
+
+        match self.stage.clone() {
+            GameStage::Preparation => {
+                clear_moves();
+                self.bettors.clear();
+            }
+            GameStage::InProgress(description) => {
+                if description.finished_players.is_empty() {
+                    clear_moves();
+                }
+            }
+            GameStage::Reveal(_) => {}
         }
     }
 }
@@ -349,6 +367,7 @@ pub unsafe extern "C" fn init() {
     let game = RPSGame {
         owner: msg::source(),
         lobby: BTreeSet::from_iter(config.lobby_players.into_iter()),
+        bet_size: config.bet_size,
         ..RPSGame::default()
     };
 
@@ -366,7 +385,7 @@ pub unsafe extern "C" fn handle() {
         Action::SetLobbyPlayersList(players_list) => game.set_lobby_players_list(players_list),
         Action::SetBetSize(bet_size) => game.set_bet_size(bet_size),
         Action::MakeMove(hashed_move) => game.make_move(hashed_move),
-        Action::Reveal(throw) => game.reveal(throw.as_str()),
+        Action::Reveal(real_move) => game.reveal(real_move.as_str()),
         Action::StopGame => game.stop_the_game(),
     }
 }
