@@ -82,8 +82,14 @@ pub fn failure_user_move(program: &Program, player: u64, users_move: Move, bet: 
 pub fn try_to_move(program: &Program, player: u64, users_move: Move, bet: u128) -> RunResult {
     let move_with_pass = users_move.number().to_string() + DEFAULT_PASSWORD;
     let hash_bytes = sp_core_hashing::blake2_256(move_with_pass.as_bytes());
-    let hex_hash = format!("{:x?}", hash_bytes);
+    let hex_hash = to_hex_string(hash_bytes);
     program.send_with_value(player, Action::MakeMove(hex_hash), bet)
+}
+
+fn to_hex_string(bytes: [u8; 32]) -> String {
+    bytes.iter()
+        .map(|b| format!("{:02x}", b))
+        .collect::<String>()
 }
 
 pub fn check_user_reveal_with_continue(program: &Program, player: u64, users_move: Move) {

@@ -36,7 +36,6 @@ export async function first() {
 
     deploy(
       gearApi,
-      metaFile,
       file,
       account,
       0,
@@ -44,6 +43,7 @@ export async function first() {
       function(id) {
         programId = id;
       },
+      metaFile,
     )
 }
 export async function second() {
@@ -54,14 +54,15 @@ export async function second() {
   console.log(Move.LIZARD.toString() + '123')
   makeMove(
     gearApi,
-    metaFile,
     programId,
     account,
     Move.LIZARD,
     '123',
+    0,
     function(event) {
       console.log(event.toHuman());
     },
+    metaFile,
   )
 }
 
@@ -72,7 +73,6 @@ export async function third() {
 
   reveal(
     gearApi,
-    metaFile,
     programId,
     account,
     Move.LIZARD,
@@ -80,5 +80,6 @@ export async function third() {
     function(event) {
       console.log(event.toHuman());
     },
+    metaFile,
   )
 }

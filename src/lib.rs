@@ -87,7 +87,7 @@ impl RPSGame {
             .expect("Can't find a move of this player");
 
         let hash_bytes = sp_core_hashing::blake2_256(real_move.as_bytes());
-        let hex_hash = format!("{:x?}", hash_bytes);
+        let hex_hash = Self::to_hex_string(hash_bytes);
 
         if &hex_hash != saved_move {
             panic!("Player tries to cheat")
@@ -189,6 +189,12 @@ impl RPSGame {
         self.stage = GameStage::Preparation;
 
         msg::reply(Event::GameWasStopped(players), 0).expect("Reply error");
+    }
+
+    fn to_hex_string(bytes: [u8; 32]) -> String {
+        bytes.iter()
+            .map(|b| format!("{:02x}", b))
+            .collect::<String>()
     }
 
     fn transit_to_in_progress_stage_from_preparation(&mut self) {
