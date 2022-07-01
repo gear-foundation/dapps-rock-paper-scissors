@@ -87,7 +87,8 @@ pub fn try_to_move(program: &Program, player: u64, users_move: Move, bet: u128) 
 }
 
 fn to_hex_string(bytes: [u8; 32]) -> String {
-    bytes.iter()
+    bytes
+        .iter()
         .map(|b| format!("{:02x}", b))
         .collect::<String>()
 }

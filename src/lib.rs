@@ -192,7 +192,8 @@ impl RPSGame {
     }
 
     fn to_hex_string(bytes: [u8; 32]) -> String {
-        bytes.iter()
+        bytes
+            .iter()
             .map(|b| format!("{:02x}", b))
             .collect::<String>()
     }
