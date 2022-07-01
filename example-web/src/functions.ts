@@ -4,16 +4,6 @@ import { deploy, makeMove, Move, reveal } from 'rock-paper-scissors-api';
 
 var programId: Hex;
 
-async function getMeta() {
-  const metaPath = './contract_files/rock_paper_scissors.meta.wasm';
-  return Buffer.from(await (await fetch(metaPath)).arrayBuffer());
-}
-
-async function getCodeFile() {
-  const path = './contract_files/rock_paper_scissors.opt.wasm';
-  return new File([await (await fetch(path)).blob()], path);
-}
-
 async function getAccount() {
   await web3Enable('Gear App');
   const account = (await web3Accounts())[2];
@@ -29,26 +19,21 @@ async function getAccount() {
 
 export async function first() {
     const gearApi = await GearApi.create();
-    const metaFile = await getMeta();
-    const meta =  await getWasmMetadata(metaFile);
-    const file = await getCodeFile();
     const account = await getAccount();
 
     deploy(
       gearApi,
-      file,
       account,
       0,
       [account.decodedAddress],
       function(id) {
         programId = id;
       },
-      metaFile,
     )
 }
+
 export async function second() {
   const gearApi = await GearApi.create();
-  const metaFile = await getMeta();
   const account = await getAccount();
 
   console.log(Move.LIZARD.toString() + '123')
@@ -62,13 +47,11 @@ export async function second() {
     function(event) {
       console.log(event.toHuman());
     },
-    metaFile,
   )
 }
 
 export async function third() {
   const gearApi = await GearApi.create();
-  const metaFile = await getMeta();
   const account = await getAccount();
 
   reveal(
@@ -80,6 +63,5 @@ export async function third() {
     function(event) {
       console.log(event.toHuman());
     },
-    metaFile,
   )
 }

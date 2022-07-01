@@ -11,25 +11,35 @@ export enum Move {
   SPOCK,
 }
 
+async function getMeta() {
+  const metaPath = '../contract_files/rock_paper_scissors.meta.wasm';
+  return Buffer.from(await (await fetch(metaPath)).arrayBuffer());
+}
+
+async function getCodeFile() {
+  const path = '../contract_files/rock_paper_scissors.opt.wasm';
+  return new File([await (await fetch(path)).blob()], path);
+}
+
 export async function deploy(
   gearApi: GearApi,
-  code: File,
   account: Account,
   bet_size: number,
   players: [Hex],
   programIdHandler: (id: Hex) => void,
-  metaBuffer?: Buffer,
 ) {
-    const meta =  await getWasmMetadata(metaBuffer);
-    const initPayload = payloads.init(bet_size, players);
+  const metaBuffer = await getMeta();
+  const code = await getCodeFile();
+  const meta = await getWasmMetadata(metaBuffer);
+  const initPayload = payloads.init(bet_size, players);
 
-    const programOptions: UploadProgramModel = {
-      meta,
-      value: 0,
-      initPayload,
-    };
-  
-    UploadProgram(gearApi, account, code, programOptions, programIdHandler)
+  const programOptions: UploadProgramModel = {
+    meta,
+    value: 0,
+    initPayload,
+  };
+
+  UploadProgram(gearApi, account, code, programOptions, programIdHandler)
 }
 
 async function sendAction(
@@ -38,8 +48,8 @@ async function sendAction(
   account: Account,
   payload: PayloadType,
   eventHandler: (event: any) => void,
-  metaBuffer?: Buffer,
 ) {
+  const metaBuffer = await getMeta();
   const meta = (metaBuffer !== null && metaBuffer !== undefined) ? await getWasmMetadata(metaBuffer) : null;
   let messageModel: MessageModel = {
     destination: programId,
@@ -55,7 +65,6 @@ export async function addPlayerInLobby(
   account: Account,
   player: Hex,
   eventHandler: (event: any) => void,
-  metaBuffer?: Buffer,
 ) {
   sendAction(
     gearApi,
@@ -63,7 +72,6 @@ export async function addPlayerInLobby(
     account,
     payloads.addPlayerInLobby(player),
     eventHandler,
-    metaBuffer,
   )
 }
 
@@ -73,7 +81,6 @@ export async function removePlayerFromLobby(
   account: Account,
   player: Hex,
   eventHandler: (event: any) => void,
-  metaBuffer?: Buffer,
 ) {
   sendAction(
     gearApi,
@@ -81,7 +88,6 @@ export async function removePlayerFromLobby(
     account,
     payloads.removePlayerFromLobby(player),
     eventHandler,
-    metaBuffer,
   )
 }
 
@@ -91,7 +97,6 @@ export async function setLobbyPlayersList(
   account: Account,
   players_list: [Hex],
   eventHandler: (event: any) => void,
-  metaBuffer?: Buffer,
 ) {
   sendAction(
     gearApi,
@@ -99,7 +104,6 @@ export async function setLobbyPlayersList(
     account,
     payloads.setLobbyPlayersList(players_list),
     eventHandler,
-    metaBuffer,
   )
 }
 
@@ -109,7 +113,6 @@ export async function setBetSize(
   account: Account,
   betSize: number,
   eventHandler: (event: any) => void,
-  metaBuffer?: Buffer,
 ) {
   sendAction(
     gearApi,
@@ -117,7 +120,6 @@ export async function setBetSize(
     account,
     payloads.setBetSize(betSize),
     eventHandler,
-    metaBuffer,
   )
 }
 
@@ -129,7 +131,6 @@ export async function makeMove(
   password: string,
   bet: number,
   eventHandler: (event: any) => void,
-  metaBuffer?: Buffer,
 ) {
   const moveWithPass = move.toString() + password;
 
@@ -143,7 +144,6 @@ export async function makeMove(
     account,
     payloads.makeMove(result),
     eventHandler,
-    metaBuffer,
   )
 }
 
@@ -154,7 +154,6 @@ export async function reveal(
   move: Move,
   password: string,
   eventHandler: (event: any) => void,
-  metaBuffer?: Buffer,
 ) {
   sendAction(
     gearApi,
@@ -162,7 +161,6 @@ export async function reveal(
     account,
     payloads.reveal(move.toString() + password),
     eventHandler,
-    metaBuffer,
   )
 }
 
@@ -171,7 +169,6 @@ export async function stopGame(
   programId: Hex,
   account: Account,
   eventHandler: (event: any) => void,
-  metaBuffer?: Buffer,
 ) {
   sendAction(
     gearApi,
@@ -179,7 +176,6 @@ export async function stopGame(
     account,
     payloads.stopGame,
     eventHandler,
-    metaBuffer,
   )
 }
 
