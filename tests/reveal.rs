@@ -353,7 +353,8 @@ fn check_five_different_moves() {
         Move::Scissors,
     ];
     let mut users = USERS.to_vec();
-    users.push(7);
+    users.push(USERS[3] + 1);
+    sys.mint_to(USERS[3] + 1, 1_000_000_000);
 
     let game = reach_reveal_stage_with_init(&sys, users.as_slice(), &moves);
 
@@ -371,7 +372,7 @@ fn check_five_different_moves() {
 #[test]
 fn check_reveal_on_preparation_stage() {
     let sys = System::new();
-    let game = common_init(&sys);
+    let game = common_init_and_register(&sys);
 
     failure_user_reveal(&game, USERS[0], Move::Rock)
 }
@@ -379,9 +380,9 @@ fn check_reveal_on_preparation_stage() {
 #[test]
 fn check_reveal_on_progress_stage() {
     let sys = System::new();
-    let game = common_init(&sys);
+    let game = common_init_and_register(&sys);
 
-    check_user_move(&game, USERS[0], Move::Rock, COMMON_BET);
+    check_user_move(&game, USERS[0], Move::Rock);
 
     failure_user_reveal(&game, USERS[0], Move::Rock);
     failure_user_reveal(&game, USERS[1], Move::Rock);
@@ -403,7 +404,7 @@ fn check_reveal_twice() {
 #[test]
 fn check_third_party_player_reveal() {
     let sys = System::new();
-    let game = common_init(&sys);
+    let game = common_init_and_register(&sys);
     let moves = [Move::Spock, Move::Lizard, Move::Lizard];
 
     reach_reveal_stage_with_init(&sys, &USERS[..3], &moves);
@@ -414,7 +415,7 @@ fn check_third_party_player_reveal() {
 #[test]
 fn check_other_password_reveal() {
     let sys = System::new();
-    let game = common_init(&sys);
+    let game = common_init_and_register(&sys);
     let moves = [Move::Spock, Move::Lizard, Move::Lizard, Move::Lizard];
 
     reach_reveal_stage_with_init(&sys, USERS, &moves);

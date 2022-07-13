@@ -126,15 +126,11 @@ impl GameStage {
     }
 }
 
-#[derive(Debug, Decode, Encode, TypeInfo)]
-pub enum Action {
-    AddPlayerInLobby(ActorId),
-    RemovePlayerFromLobby(ActorId),
-    SetLobbyPlayersList(Vec<ActorId>),
-    SetBetSize(u128),
-    MakeMove(String),
-    Reveal(String),
-    StopGame,
+#[derive(Debug, Encode, Decode, TypeInfo)]
+pub struct Duration {
+    pub days: u64,
+    pub hours: u64,
+    pub minutes: u64,
 }
 
 #[derive(Debug, Encode, Decode, TypeInfo)]
@@ -144,36 +140,43 @@ pub enum RevealResult {
     GameOver { winner: ActorId },
 }
 
+#[derive(Debug, Decode, Encode, TypeInfo)]
+pub enum Action {
+    Register,
+    MakeMove(String),
+    Reveal(String),
+    ChangeNextGameConfig(GameConfig),
+    StopGame,
+}
+
 #[derive(Debug, Encode, Decode, TypeInfo)]
 pub enum Event {
-    PlayerWasAdded(ActorId),
-    PlayerWasRemoved(ActorId),
-    LobbyPlayersListUpdated,
-    BetSizeWasChanged(u128),
+    PlayerRegistred,
     SuccessfulMove(ActorId),
     SuccessfulReveal(RevealResult),
+    GameConfigChanged,
     GameWasStopped(BTreeSet<ActorId>),
 }
 
 #[derive(Debug, Encode, Decode, TypeInfo)]
 pub enum State {
-    BetSize,
+    Config,
     LobbyList,
-    // RemainingPlayersList,
-    // MovedPlayersList,
-    // RevealedPlayersList,
     GameState,
 }
 
 #[derive(Debug, Encode, Decode, TypeInfo)]
 pub enum StateReply {
-    BetSize(u128),
+    Config(GameConfig),
     LobbyList(Vec<ActorId>),
     GameStage(GameStage),
 }
 
-#[derive(Debug, Encode, Decode, TypeInfo)]
-pub struct InitConfig {
+#[derive(Debug, Default, Clone, Encode, Decode, TypeInfo, PartialEq)]
+pub struct GameConfig {
     pub bet_size: u128,
-    pub lobby_players: Vec<ActorId>,
+    pub players_count_limit: u8,
+    pub entry_timeout: u64,
+    pub move_timeout: u64,
+    pub reveal_timeout: u64,
 }

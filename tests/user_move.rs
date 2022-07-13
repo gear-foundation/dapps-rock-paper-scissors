@@ -9,72 +9,63 @@ pub use routines::*;
 fn common_check() {
     let sys = System::new();
 
-    let game = common_init(&sys);
+    let game = common_init_and_register(&sys);
 
-    check_user_move(&game, USERS[0], Move::Spock, COMMON_BET);
+    check_user_move(&game, USERS[0], Move::Spock);
 }
 
 #[test]
 fn check_greater_bet() {
     let sys = System::new();
 
-    let game = common_init(&sys);
+    let game = common_init_and_register(&sys);
 
-    check_user_move(&game, USERS[0], Move::Spock, 10_000_000);
+    check_user_move(&game, USERS[0], Move::Spock);
 }
 
 #[test]
 fn check_two_moves() {
     let sys = System::new();
 
-    let game = common_init(&sys);
+    let game = common_init_and_register(&sys);
 
-    check_user_move(&game, USERS[0], Move::Spock, COMMON_BET);
-    check_user_move(&game, USERS[1], Move::Spock, COMMON_BET);
+    check_user_move(&game, USERS[0], Move::Spock);
+    check_user_move(&game, USERS[1], Move::Spock);
 }
 
 #[test]
 fn check_not_added_user() {
     let sys = System::new();
 
-    let game = common_init(&sys);
+    let game = common_init_and_register(&sys);
 
-    failure_user_move(&game, USERS[3], Move::Spock, COMMON_BET);
-}
-
-#[test]
-fn check_wrong_bet() {
-    let sys = System::new();
-
-    let game = common_init(&sys);
-
-    failure_user_move(&game, USERS[0], Move::Spock, 100_000);
+    failure_user_move(&game, USERS[3], Move::Spock);
 }
 
 #[test]
 fn check_move_twice() {
     let sys = System::new();
 
-    let game = common_init(&sys);
+    let game = common_init_and_register(&sys);
 
-    check_user_move(&game, USERS[0], Move::Spock, COMMON_BET);
-    failure_user_move(&game, USERS[0], Move::Spock, COMMON_BET);
+    check_user_move(&game, USERS[0], Move::Spock);
+    failure_user_move(&game, USERS[0], Move::Spock);
 }
 
 #[test]
 fn check_on_reveal_stage() {
     let sys = System::new();
 
-    let game = common_init(&sys);
+    let game = common_init_and_register(&sys);
 
-    check_user_move(&game, USERS[0], Move::Spock, COMMON_BET);
-    check_user_move(&game, USERS[1], Move::Spock, COMMON_BET);
-    check_user_move(&game, USERS[2], Move::Spock, COMMON_BET);
+    check_user_move(&game, USERS[0], Move::Spock);
+    check_user_move(&game, USERS[1], Move::Spock);
+    check_user_move(&game, USERS[2], Move::Spock);
 
-    failure_user_move(&game, USERS[0], Move::Spock, COMMON_BET);
-    failure_user_move(&game, USERS[1], Move::Spock, COMMON_BET);
-    failure_user_move(&game, USERS[2], Move::Spock, COMMON_BET);
-    failure_user_move(&game, USERS[3], Move::Spock, COMMON_BET);
+    failure_user_move(&game, USERS[0], Move::Spock);
+    failure_user_move(&game, USERS[1], Move::Spock);
+    failure_user_move(&game, USERS[2], Move::Spock);
+    failure_user_move(&game, USERS[3], Move::Spock);
 
     check_user_reveal_with_continue(&game, USERS[0], Move::Spock);
 }
@@ -82,7 +73,7 @@ fn check_on_reveal_stage() {
 #[test]
 fn check_move_in_second_round_without_bet() {
     let sys = System::new();
-    let game = init_with_users(&sys, USERS);
+    let game = init_and_register_with_users(&sys, USERS);
     let moves = [Move::Rock, Move::Paper, Move::Scissors, Move::Spock];
 
     play_round(&game, USERS, &moves).contains(&(
@@ -93,7 +84,7 @@ fn check_move_in_second_round_without_bet() {
         .encode(),
     ));
 
-    let result = try_to_move(&game, USERS[0], Move::Rock, 0);
+    let result = try_to_move(&game, USERS[0], Move::Rock);
 
     assert!(!result.main_failed());
 }
@@ -101,7 +92,7 @@ fn check_move_in_second_round_without_bet() {
 #[test]
 fn check_move_in_second_round_with_bet() {
     let sys = System::new();
-    let game = init_with_users(&sys, USERS);
+    let game = init_and_register_with_users(&sys, USERS);
     let moves = [Move::Rock, Move::Paper, Move::Scissors, Move::Spock];
 
     play_round(&game, USERS, &moves).contains(&(
@@ -112,7 +103,7 @@ fn check_move_in_second_round_with_bet() {
         .encode(),
     ));
 
-    let result = try_to_move(&game, USERS[0], Move::Rock, COMMON_BET);
+    let result = try_to_move(&game, USERS[0], Move::Rock);
 
     assert!(!result.main_failed());
 }

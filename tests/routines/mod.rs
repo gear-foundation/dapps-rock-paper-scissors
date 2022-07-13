@@ -3,26 +3,42 @@ use gtest::{Program, RunResult, System};
 use io::*;
 
 pub const USERS: &[u64] = &[3, 4, 5, 6];
+pub const COMMON_USERS_SET: &[u64] = &[3, 4, 5];
 pub const DEFAULT_PASSWORD: &str = "pass12";
 pub const COMMON_BET: u128 = 1_000_000;
+pub const COMMON_PLAYERS_COUNT_LIMIT: u8 = 5;
+pub const COMMON_TIMOUT: u64 = 5_000;
+pub const COMMON_CONFIG: GameConfig = GameConfig {
+    bet_size: COMMON_BET,
+    players_count_limit: COMMON_PLAYERS_COUNT_LIMIT,
+    entry_timeout: COMMON_TIMOUT,
+    move_timeout: COMMON_TIMOUT,
+    reveal_timeout: COMMON_TIMOUT,
+};
+
+pub fn blocks_count(timout: u64) -> u32 {
+    timout as _
+}
 
 pub fn common_init(sys: &System) -> Program {
-    init_with_users(sys, &USERS[0..3])
+    common_init_with_owner_and_bet(sys, USERS[0], COMMON_BET)
 }
 
-pub fn init_with_users<'a>(sys: &'a System, users: &[u64]) -> Program<'a> {
-    init(sys, USERS[0], users, COMMON_BET)
-}
-
-fn init<'a>(sys: &'a System, owner_user: u64, players: &[u64], bet_size: u128) -> Program<'a> {
+pub fn common_init_with_owner_and_bet(sys: &System, owner_user: u64, bet_size: u128) -> Program {
     sys.init_logger();
-
+    USERS
+        .iter()
+        .copied()
+        .for_each(|id| sys.mint_to(id, 1_000_000_000));
     let program = Program::current(sys);
     let result = program.send(
         owner_user,
-        InitConfig {
+        GameConfig {
             bet_size,
-            lobby_players: players.iter().map(|user| (*user).into()).collect(),
+            players_count_limit: COMMON_PLAYERS_COUNT_LIMIT,
+            entry_timeout: COMMON_TIMOUT,
+            move_timeout: COMMON_TIMOUT,
+            reveal_timeout: COMMON_TIMOUT,
         },
     );
 
@@ -32,12 +48,39 @@ fn init<'a>(sys: &'a System, owner_user: u64, players: &[u64], bet_size: u128) -
     program
 }
 
+pub fn common_init_and_register(sys: &System) -> Program {
+    init_and_register_with_users(sys, COMMON_USERS_SET)
+}
+
+pub fn init_and_register_with_users<'a>(sys: &'a System, users: &[u64]) -> Program<'a> {
+    init_register_users_and_wait_until_move_stage(sys, USERS[0], users, COMMON_BET)
+}
+
+fn init_register_users_and_wait_until_move_stage<'a>(
+    sys: &'a System,
+    owner_user: u64,
+    players: &[u64],
+    bet_size: u128,
+) -> Program<'a> {
+    let program = common_init_with_owner_and_bet(sys, owner_user, bet_size);
+    register_players(&program, players, bet_size);
+    sys.spend_blocks(blocks_count(COMMON_TIMOUT + 1));
+
+    program
+}
+
+pub fn register_players(program: &Program, players: &[u64], bet_size: u128) {
+    players
+        .iter()
+        .for_each(|player| check_register_player(program, *player, bet_size));
+}
+
 pub fn reach_reveal_stage_with_init<'a>(
     sys: &'a System,
     users: &[u64],
     moves: &[Move],
 ) -> Program<'a> {
-    let game = init_with_users(sys, users);
+    let game = init_and_register_with_users(sys, users);
     reach_reveal_stage(&game, users, moves);
 
     game
@@ -50,7 +93,7 @@ pub fn reach_reveal_stage(game: &Program, users: &[u64], moves: &[Move]) {
         .iter()
         .copied()
         .zip(moves.iter().cloned())
-        .for_each(|(user, users_move)| check_user_move(game, user, users_move, COMMON_BET));
+        .for_each(|(user, users_move)| check_user_move(game, user, users_move));
 }
 
 pub fn play_round(game: &Program, users: &[u64], moves: &[Move]) -> RunResult {
@@ -67,23 +110,23 @@ pub fn play_round(game: &Program, users: &[u64], moves: &[Move]) -> RunResult {
     try_to_reveal(game, *users.last().unwrap(), moves.last().cloned().unwrap())
 }
 
-pub fn check_user_move(program: &Program, player: u64, users_move: Move, bet: u128) {
-    let result = try_to_move(program, player, users_move, bet);
+pub fn check_user_move(program: &Program, player: u64, users_move: Move) {
+    let result = try_to_move(program, player, users_move);
 
     assert!(result.contains(&(player, Event::SuccessfulMove(player.into()).encode())));
 }
 
-pub fn failure_user_move(program: &Program, player: u64, users_move: Move, bet: u128) {
-    let result = try_to_move(program, player, users_move, bet);
+pub fn failure_user_move(program: &Program, player: u64, users_move: Move) {
+    let result = try_to_move(program, player, users_move);
 
     assert!(result.main_failed());
 }
 
-pub fn try_to_move(program: &Program, player: u64, users_move: Move, bet: u128) -> RunResult {
+pub fn try_to_move(program: &Program, player: u64, users_move: Move) -> RunResult {
     let move_with_pass = users_move.number().to_string() + DEFAULT_PASSWORD;
     let hash_bytes = sp_core_hashing::blake2_256(move_with_pass.as_bytes());
     let hex_hash = to_hex_string(hash_bytes);
-    program.send_with_value(player, Action::MakeMove(hex_hash), bet)
+    program.send(player, Action::MakeMove(hex_hash))
 }
 
 fn to_hex_string(bytes: [u8; 32]) -> String {
@@ -165,47 +208,26 @@ fn try_to_reveal_with_password(
     program.send(player, Action::Reveal(move_with_pass))
 }
 
-pub fn check_remove_player(program: &Program, from: u64, removing_player: u64) {
-    let result = program.send(from, Action::RemovePlayerFromLobby(removing_player.into()));
+pub fn check_register_player(program: &Program, from: u64, bet: u128) {
+    let result = program.send_with_value(from, Action::Register, bet);
 
-    assert!(result.contains(&(
-        from,
-        Event::PlayerWasRemoved(removing_player.into()).encode()
-    )));
+    assert!(result.contains(&(from, Event::PlayerRegistred.encode())));
 }
 
-pub fn failure_remove_player(program: &Program, from: u64, removing_player: u64) {
-    let result = program.send(from, Action::RemovePlayerFromLobby(removing_player.into()));
+pub fn failure_register_player(program: &Program, from: u64, bet: u128) {
+    let result = program.send_with_value(from, Action::Register, bet);
 
     assert!(result.main_failed());
 }
 
-pub fn check_change_lobby(program: &Program, from: u64, players: &[u64]) {
-    let result = program.send(
-        from,
-        Action::SetLobbyPlayersList(players.iter().cloned().map(|x| x.into()).collect()),
-    );
+pub fn check_change_next_game_config(program: &Program, from: u64, config: GameConfig) {
+    let result = program.send(from, Action::ChangeNextGameConfig(config));
 
-    assert!(result.contains(&(from, Event::LobbyPlayersListUpdated.encode())));
+    assert!(result.contains(&(from, Event::GameConfigChanged.encode())));
 }
 
-pub fn failure_change_lobby(program: &Program, from: u64, players: &[u64]) {
-    let result = program.send(
-        from,
-        Action::SetLobbyPlayersList(players.iter().cloned().map(|x| x.into()).collect()),
-    );
-
-    assert!(result.main_failed());
-}
-
-pub fn check_add_player(program: &Program, from: u64, adding_player: u64) {
-    let result = program.send(from, Action::AddPlayerInLobby(adding_player.into()));
-
-    assert!(result.contains(&(from, Event::PlayerWasAdded(adding_player.into()).encode())));
-}
-
-pub fn failure_add_player(program: &Program, from: u64, adding_player: u64) {
-    let result = program.send(from, Action::AddPlayerInLobby(adding_player.into()));
+pub fn failure_change_next_game_config(program: &Program, from: u64, config: GameConfig) {
+    let result = program.send(from, Action::ChangeNextGameConfig(config));
 
     assert!(result.main_failed());
 }
