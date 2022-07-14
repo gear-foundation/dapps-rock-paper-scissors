@@ -163,6 +163,7 @@ pub enum State {
     Config,
     LobbyList,
     GameState,
+    CurrentStageTimestamp,
 }
 
 #[derive(Debug, Encode, Decode, TypeInfo)]
@@ -170,6 +171,7 @@ pub enum StateReply {
     Config(GameConfig),
     LobbyList(Vec<ActorId>),
     GameStage(GameStage),
+    CurrentStageTimestamp(u64),
 }
 
 #[derive(Debug, Default, Clone, Encode, Decode, TypeInfo, PartialEq)]

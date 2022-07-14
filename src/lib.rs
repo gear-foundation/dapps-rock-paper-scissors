@@ -463,6 +463,9 @@ unsafe extern "C" fn meta_state() -> *mut [i32; 2] {
         State::Config => StateReply::Config(game.game_config.clone()),
         State::LobbyList => StateReply::LobbyList(game.lobby.clone().into_iter().collect()),
         State::GameState => StateReply::GameStage(game.stage.clone()),
+        State::CurrentStageTimestamp => {
+            StateReply::CurrentStageTimestamp(game.current_stage_start_timestamp)
+        }
     }
     .encode();
 
