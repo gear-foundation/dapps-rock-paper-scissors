@@ -328,49 +328,17 @@ impl RPSGame {
     }
 
     fn next_round_moves_set(&self, set_of_moves: BTreeSet<Move>) -> BTreeSet<Move> {
-        let mut wins_loses_map = BTreeMap::from_iter(
-            set_of_moves
-                .iter()
-                .cloned()
-                .map(|users_move| (users_move, (0, 0))),
-        );
-
-        let mut iterator = set_of_moves.iter();
-
-        while let Some(a_move) = iterator.next() {
-            let cloned_iterator = iterator.clone();
-
-            for b_move in cloned_iterator {
-                if a_move.wins(b_move) {
-                    wins_loses_map.get_mut(a_move).unwrap().0 += 1;
-                    wins_loses_map.get_mut(b_move).unwrap().1 += 1;
-                } else {
-                    wins_loses_map.get_mut(a_move).unwrap().1 += 1;
-                    wins_loses_map.get_mut(b_move).unwrap().0 += 1;
+        'outer: for a_move in set_of_moves.iter() {
+            for b_move in set_of_moves.iter() {
+                if a_move != b_move && !a_move.wins(b_move) {
+                    continue 'outer;
                 }
             }
+
+            return BTreeSet::from([a_move.clone()]);
         }
 
-        let (only_wins, only_loses) = wins_loses_map.into_iter().fold(
-            (BTreeSet::new(), BTreeSet::new()),
-            |(mut only_wins, mut only_loses), (users_move, (wins, loses))| {
-                if loses == 0 {
-                    only_wins.insert(users_move);
-                } else if wins == 0 {
-                    only_loses.insert(users_move);
-                };
-
-                (only_wins, only_loses)
-            },
-        );
-
-        if !only_wins.is_empty() {
-            only_wins
-        } else if !only_loses.is_empty() {
-            set_of_moves.difference(&only_loses).cloned().collect()
-        } else {
-            set_of_moves
-        }
+        set_of_moves
     }
 
     fn save_move(&mut self, player: &ActorId, move_hash: String) {
