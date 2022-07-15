@@ -33,6 +33,8 @@ fn check_game_over() {
     }
 
     check_user_reveal_with_game_over(&game, USERS[3], moves[3].clone(), USERS[1].into());
+
+    assert_eq!(sys.balance_of(USERS[1]), 1_000_000_000 + COMMON_BET * 3);
 }
 
 #[test]
