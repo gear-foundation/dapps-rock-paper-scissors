@@ -1,5 +1,5 @@
 use gstd::{prelude::*, ActorId};
-use gtest::System;
+use gtest::{Log, System};
 use io::*;
 
 mod routines;
@@ -34,6 +34,9 @@ fn check_game_over() {
 
     check_user_reveal_with_game_over(&game, USERS[3], moves[3].clone(), USERS[1].into());
 
+    let mailbox = sys.get_mailbox(USERS[1]);
+    let log = Log::builder().source(1).dest(USERS[1]).payload("WIN");
+    mailbox.claim_value(log);
     assert_eq!(sys.balance_of(USERS[1]), 1_000_000_000 + COMMON_BET * 3);
 }
 

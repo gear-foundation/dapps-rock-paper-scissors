@@ -3,11 +3,12 @@
 use gstd::{debug, exec, msg, prelude::*, ActorId};
 use io::*;
 
-static mut RPS_GAME: Option<RPSGame> = None;
+mod validations;
+use validations::validate_game_config;
 
-const MILLISEC_IN_SEC: u64 = 1000;
-const MIN_TIMEOUT: u64 = 5 * MILLISEC_IN_SEC;
-const MIN_PLAYERS_COUNT: u8 = 2;
+mod helper_functions;
+
+static mut RPS_GAME: Option<RPSGame> = None;
 
 #[derive(Debug, Default)]
 struct RPSGame {
@@ -22,107 +23,6 @@ struct RPSGame {
 }
 
 impl RPSGame {
-    fn validate_game_config(config: &GameConfig) {
-        if config.players_count_limit < MIN_PLAYERS_COUNT {
-            panic!("Players count limit is too low")
-        }
-
-        if config.entry_timeout < MIN_TIMEOUT {
-            panic!("Entry timeout is too low")
-        }
-
-        if config.move_timeout < MIN_TIMEOUT {
-            panic!("Move timeout is too low")
-        }
-
-        if config.reveal_timeout < MIN_TIMEOUT {
-            panic!("Reveal timeout is too low")
-        }
-    }
-
-    fn validate_there_is_place_for_player(&self) {
-        if self.lobby.len() + 1 > self.game_config.players_count_limit as usize {
-            panic!("There are enough players")
-        }
-    }
-
-    fn validate_source_is_owner(&self) {
-        if msg::source() != self.owner {
-            panic!("Caller is not an owner")
-        }
-    }
-
-    fn validate_there_is_no_such_player(&self, player: &ActorId) {
-        if self.lobby.contains(player) {
-            panic!("This player is already in lobby")
-        }
-    }
-
-    fn validate_game_is_not_in_progress(&self) {
-        if self.stage.game_is_in_progress() {
-            panic!("Game is in progress")
-        }
-    }
-
-    fn validate_game_is_in_progress(&self) {
-        if !self.stage.game_is_in_progress() {
-            panic!("Game is not in progress")
-        }
-    }
-
-    fn validate_bet(&self, value: u128) {
-        if self.game_config.bet_size > value {
-            panic!("Not enough money for bet")
-        }
-    }
-
-    fn validate_player_can_make_a_move(&self, player: &ActorId) {
-        match &self.stage {
-            GameStage::InProgress(description) => {
-                if !description.anticipated_players.contains(player) {
-                    panic!("There is no such player in game right now, may be he got out of the game or he is not in the lobby")
-                }
-            }
-            GameStage::Reveal(_) | GameStage::Preparation => {
-                panic!(
-                    "It's not time to make a move, {:?}, {:?}, {:?}",
-                    self.stage,
-                    exec::block_timestamp(),
-                    self.current_stage_start_timestamp,
-                );
-            }
-        };
-    }
-
-    fn validate_player_can_reveal(&self, player: &ActorId) {
-        match &self.stage {
-            GameStage::Preparation | GameStage::InProgress(_) => panic!("It's not reveal stage!"),
-            GameStage::Reveal(description) => {
-                if !description.anticipated_players.contains(player) {
-                    if description.finished_players.contains(player) {
-                        panic!("Player has already revealed")
-                    } else {
-                        panic!("There is no such player at the reveal stage")
-                    }
-                }
-            }
-        };
-    }
-
-    fn validate_reveal(&self, player: &ActorId, real_move: &str) {
-        let saved_move = self
-            .encrypted_moves
-            .get(player)
-            .expect("Can't find a move of this player");
-
-        let hash_bytes = sp_core_hashing::blake2_256(real_move.as_bytes());
-        let hex_hash = Self::to_hex_string(hash_bytes);
-
-        if &hex_hash != saved_move {
-            panic!("Player tries to cheat")
-        }
-    }
-
     fn register(&mut self) {
         self.validate_game_is_not_in_progress();
         self.validate_bet(msg::value());
@@ -158,7 +58,7 @@ impl RPSGame {
     }
 
     fn set_next_game_config(&mut self, config: GameConfig) {
-        Self::validate_game_config(&config);
+        validate_game_config(&config);
         self.validate_source_is_owner();
 
         self.next_game_config = Some(config);
@@ -172,7 +72,7 @@ impl RPSGame {
 
         let players = if matches!(self.stage, GameStage::Preparation) {
             self.lobby.iter().for_each(|player| {
-                msg::send(*player, "", self.game_config.bet_size).expect("Can't send reward");
+                msg::send(*player, "STOP", self.game_config.bet_size).expect("Can't send reward");
             });
 
             self.lobby.clone()
@@ -182,7 +82,7 @@ impl RPSGame {
             let part = exec::value_available() / players.len() as u128;
 
             for player in players.iter() {
-                msg::send(*player, "", part).expect("Can't send reward");
+                msg::send(*player, "STOP", part).expect("Can't send reward");
             }
 
             players
@@ -192,201 +92,6 @@ impl RPSGame {
 
         self.start_new_game();
     }
-
-    fn change_stage_by_timeout_if_needed(&mut self) {
-        let end_time = self.current_stage_start_timestamp
-            + match self.stage {
-                GameStage::Preparation => self.game_config.entry_timeout,
-                GameStage::InProgress(_) => self.game_config.move_timeout,
-                GameStage::Reveal(_) => self.game_config.reveal_timeout,
-            };
-
-        if end_time < exec::block_timestamp() {
-            match self.stage.clone() {
-                GameStage::Preparation => self.handle_preparation_timout(),
-                GameStage::InProgress(desctription) => self.handle_moves_timout(&desctription),
-                GameStage::Reveal(desctription) => self.handle_reveal_timout(&desctription),
-            }
-        }
-    }
-
-    fn to_hex_string(bytes: [u8; 32]) -> String {
-        bytes
-            .iter()
-            .map(|b| format!("{:02x}", b))
-            .collect::<String>()
-    }
-
-    fn transit_to_in_progress_stage_from_preparation(&mut self) {
-        let progress_description = StageDescription {
-            anticipated_players: self.lobby.clone(),
-            finished_players: Default::default(),
-        };
-
-        self.stage = GameStage::InProgress(progress_description);
-        self.update_timestamp();
-    }
-
-    fn try_to_transit_to_reveal_stage_after_move(&mut self) {
-        if let GameStage::InProgress(description) = self.stage.clone() {
-            if description.anticipated_players.is_empty() {
-                self.transit_to_reveal_stage(&description);
-            }
-        }
-    }
-
-    fn handle_preparation_timout(&mut self) {
-        match self.lobby.len() {
-            0 | 1 => self.update_timestamp(),
-            _ => self.transit_to_in_progress_stage_from_preparation(),
-        }
-    }
-
-    fn handle_moves_timout(&mut self, progress_description: &StageDescription) {
-        match progress_description.finished_players.len() {
-            0 => self.update_timestamp(),
-            1 => {
-                let winner = progress_description
-                    .finished_players
-                    .clone()
-                    .into_iter()
-                    .last()
-                    .expect("Unknown winner");
-                msg::send(winner, "", exec::value_available()).expect("Can't send reward");
-                self.start_new_game();
-            }
-            _ => self.transit_to_reveal_stage(progress_description),
-        }
-    }
-
-    fn handle_reveal_timout(&mut self, progress_description: &StageDescription) {
-        match progress_description.finished_players.len() {
-            0 => self.update_timestamp(),
-            _ => {
-                self.end_round();
-            }
-        }
-    }
-
-    fn transit_to_reveal_stage(&mut self, progress_description: &StageDescription) {
-        self.stage = GameStage::Reveal(StageDescription {
-            anticipated_players: progress_description.finished_players.clone(),
-            finished_players: Default::default(),
-        });
-        self.update_timestamp();
-    }
-
-    fn end_round_if_needed(&mut self) -> RevealResult {
-        if let GameStage::Reveal(reveal_description) = &self.stage {
-            if reveal_description.anticipated_players.is_empty() {
-                self.end_round()
-            } else {
-                RevealResult::Continue
-            }
-        } else {
-            panic!("It's not reveal stage")
-        }
-    }
-
-    fn end_round(&mut self) -> RevealResult {
-        let set_of_moves = BTreeSet::from_iter(self.player_moves.values().cloned());
-        let next_round_players: BTreeSet<ActorId> = match set_of_moves.len() {
-            1 | 4 | 5 => self.player_moves.keys().cloned().collect(),
-            2 | 3 => {
-                let winners = self.next_round_moves_set(set_of_moves);
-                self.player_moves
-                    .iter()
-                    .filter(|(_, users_move)| winners.contains(users_move))
-                    .map(|(player, _)| player)
-                    .copied()
-                    .collect()
-            }
-            _ => panic!("Unknown result"),
-        };
-
-        if next_round_players.len() > 1 {
-            self.stage = GameStage::InProgress(StageDescription {
-                anticipated_players: next_round_players.clone(),
-                finished_players: BTreeSet::new(),
-            });
-            self.update_timestamp();
-            self.clear_moves();
-
-            RevealResult::NextRoundStarted {
-                players: next_round_players,
-            }
-        } else {
-            let winner = next_round_players
-                .into_iter()
-                .last()
-                .expect("Unknown winner");
-            msg::send(winner, "", exec::value_available()).expect("Can't send reward");
-            self.start_new_game();
-
-            RevealResult::GameOver { winner }
-        }
-    }
-
-    fn next_round_moves_set(&self, set_of_moves: BTreeSet<Move>) -> BTreeSet<Move> {
-        'outer: for a_move in set_of_moves.iter() {
-            for b_move in set_of_moves.iter() {
-                if a_move != b_move && !a_move.wins(b_move) {
-                    continue 'outer;
-                }
-            }
-
-            return BTreeSet::from([a_move.clone()]);
-        }
-
-        set_of_moves
-    }
-
-    fn save_move(&mut self, player: &ActorId, move_hash: String) {
-        if let GameStage::InProgress(progress_description) = &mut self.stage {
-            self.encrypted_moves.insert(*player, move_hash);
-
-            progress_description.anticipated_players.remove(player);
-            progress_description.finished_players.insert(*player);
-        }
-    }
-
-    fn save_real_move(&mut self, player: &ActorId, real_move: &str) {
-        let users_move = real_move.chars().next().expect("Move is empty");
-        let users_move = Move::new(users_move);
-
-        self.player_moves.insert(*player, users_move);
-
-        match &mut self.stage {
-            GameStage::Preparation | GameStage::InProgress(_) => {}
-            GameStage::Reveal(description) => {
-                description.anticipated_players.remove(player);
-                description.finished_players.insert(*player);
-            }
-        }
-    }
-
-    fn clear_moves(&mut self) {
-        self.encrypted_moves.clear();
-        self.player_moves.clear();
-    }
-
-    fn start_new_game(&mut self) {
-        self.clear_for_new_game();
-        self.stage = GameStage::Preparation;
-        self.update_timestamp();
-    }
-
-    fn clear_for_new_game(&mut self) {
-        self.clear_moves();
-        self.lobby.clear();
-        if let Some(config) = self.next_game_config.take() {
-            self.game_config = config;
-        }
-    }
-
-    fn update_timestamp(&mut self) {
-        self.current_stage_start_timestamp = exec::block_timestamp();
-    }
 }
 
 #[no_mangle]
@@ -394,7 +99,7 @@ unsafe extern "C" fn init() {
     let config: GameConfig = msg::load().expect("Could not load Action");
     debug!("init(): {:?}", config);
 
-    RPSGame::validate_game_config(&config);
+    validate_game_config(&config);
 
     let game = RPSGame {
         owner: msg::source(),
