@@ -1,9 +1,8 @@
 use crate::RPSGame;
 use gstd::{exec, msg, ActorId};
-use io::*;
+use rps_io::*;
 
-const MILLISEC_IN_SEC: u64 = 1000;
-const MIN_TIMEOUT: u64 = 5 * MILLISEC_IN_SEC;
+const MIN_TIMEOUT_MS: u64 = 5000;
 const MIN_PLAYERS_COUNT: u8 = 2;
 
 impl RPSGame {
@@ -90,15 +89,15 @@ pub(crate) fn validate_game_config(config: &GameConfig) {
         panic!("Players count limit is too low")
     }
 
-    if config.entry_timeout < MIN_TIMEOUT {
+    if config.entry_timeout < MIN_TIMEOUT_MS {
         panic!("Entry timeout is too low")
     }
 
-    if config.move_timeout < MIN_TIMEOUT {
+    if config.move_timeout < MIN_TIMEOUT_MS {
         panic!("Move timeout is too low")
     }
 
-    if config.reveal_timeout < MIN_TIMEOUT {
+    if config.reveal_timeout < MIN_TIMEOUT_MS {
         panic!("Reveal timeout is too low")
     }
 }

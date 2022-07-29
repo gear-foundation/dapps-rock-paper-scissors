@@ -1,6 +1,6 @@
 use crate::RPSGame;
 use gstd::{exec, msg, prelude::*, ActorId};
-use io::*;
+use rps_io::*;
 
 impl RPSGame {
     pub(crate) fn change_stage_by_timeout_if_needed(&mut self) {
@@ -12,10 +12,15 @@ impl RPSGame {
             };
 
         if end_time < exec::block_timestamp() {
+            // match &self.stage {
+            //     GameStage::Preparation => self.handle_preparation_timeout(),
+            //     GameStage::InProgress(description) => self.handle_moves_timeout(description),
+            //     GameStage::Reveal(description) => self.handle_reveal_timeout(description),
+            // }
             match self.stage.clone() {
-                GameStage::Preparation => self.handle_preparation_timout(),
-                GameStage::InProgress(desctription) => self.handle_moves_timout(&desctription),
-                GameStage::Reveal(desctription) => self.handle_reveal_timout(&desctription),
+                GameStage::Preparation => self.handle_preparation_timeout(),
+                GameStage::InProgress(desctription) => self.handle_moves_timeout(&desctription),
+                GameStage::Reveal(desctription) => self.handle_reveal_timeout(&desctription),
             }
         }
     }
@@ -45,14 +50,14 @@ impl RPSGame {
         }
     }
 
-    pub(crate) fn handle_preparation_timout(&mut self) {
+    pub(crate) fn handle_preparation_timeout(&mut self) {
         match self.lobby.len() {
             0 | 1 => self.update_timestamp(),
             _ => self.transit_to_in_progress_stage_from_preparation(),
         }
     }
 
-    pub(crate) fn handle_moves_timout(&mut self, progress_description: &StageDescription) {
+    pub(crate) fn handle_moves_timeout(&mut self, progress_description: &StageDescription) {
         match progress_description.finished_players.len() {
             0 => self.update_timestamp(),
             1 => {
@@ -69,7 +74,7 @@ impl RPSGame {
         }
     }
 
-    pub(crate) fn handle_reveal_timout(&mut self, progress_description: &StageDescription) {
+    pub(crate) fn handle_reveal_timeout(&mut self, progress_description: &StageDescription) {
         match progress_description.finished_players.len() {
             0 => self.update_timestamp(),
             _ => {
@@ -138,8 +143,8 @@ impl RPSGame {
     }
 
     pub(crate) fn next_round_moves_set(&self, set_of_moves: BTreeSet<Move>) -> BTreeSet<Move> {
-        'outer: for a_move in set_of_moves.iter() {
-            for b_move in set_of_moves.iter() {
+        'outer: for a_move in &set_of_moves {
+            for b_move in &set_of_moves {
                 if a_move != b_move && !a_move.wins(b_move) {
                     continue 'outer;
                 }
@@ -166,9 +171,9 @@ impl RPSGame {
 
         self.player_moves.insert(*player, users_move);
 
-        match &mut self.stage {
+        match self.stage {
             GameStage::Preparation | GameStage::InProgress(_) => {}
-            GameStage::Reveal(description) => {
+            GameStage::Reveal(ref mut description) => {
                 description.anticipated_players.remove(player);
                 description.finished_players.insert(*player);
             }

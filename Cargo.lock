@@ -777,16 +777,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "io"
-version = "0.1.0"
-dependencies = [
- "gstd",
- "parity-scale-codec",
- "primitive-types",
- "scale-info",
-]
-
-[[package]]
 name = "io-lifetimes"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1174,10 +1164,20 @@ dependencies = [
  "gear-wasm-builder",
  "gstd",
  "gtest",
- "io",
  "primitive-types",
+ "rps-io",
  "scale-info",
  "sp-core-hashing",
+]
+
+[[package]]
+name = "rps-io"
+version = "0.1.0"
+dependencies = [
+ "gstd",
+ "parity-scale-codec",
+ "primitive-types",
+ "scale-info",
 ]
 
 [[package]]

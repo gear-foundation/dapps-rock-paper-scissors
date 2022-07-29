@@ -1,19 +1,19 @@
 use gstd::{prelude::*, ActorId, Encode};
 use gtest::{Program, RunResult, System};
-use io::*;
+use rps_io::*;
 
 pub const USERS: &[u64] = &[3, 4, 5, 6];
 pub const COMMON_USERS_SET: &[u64] = &[3, 4, 5];
 pub const DEFAULT_PASSWORD: &str = "pass12";
 pub const COMMON_BET: u128 = 1_000_000;
 pub const COMMON_PLAYERS_COUNT_LIMIT: u8 = 5;
-pub const COMMON_TIMOUT: u64 = 5_000;
+pub const COMMON_TIMEOUT: u64 = 5_000;
 pub const COMMON_CONFIG: GameConfig = GameConfig {
     bet_size: COMMON_BET,
     players_count_limit: COMMON_PLAYERS_COUNT_LIMIT,
-    entry_timeout: COMMON_TIMOUT,
-    move_timeout: COMMON_TIMOUT,
-    reveal_timeout: COMMON_TIMOUT,
+    entry_timeout: COMMON_TIMEOUT,
+    move_timeout: COMMON_TIMEOUT,
+    reveal_timeout: COMMON_TIMEOUT,
 };
 
 pub fn blocks_count(timout: u64) -> u32 {
@@ -36,9 +36,9 @@ pub fn common_init_with_owner_and_bet(sys: &System, owner_user: u64, bet_size: u
         GameConfig {
             bet_size,
             players_count_limit: COMMON_PLAYERS_COUNT_LIMIT,
-            entry_timeout: COMMON_TIMOUT,
-            move_timeout: COMMON_TIMOUT,
-            reveal_timeout: COMMON_TIMOUT,
+            entry_timeout: COMMON_TIMEOUT,
+            move_timeout: COMMON_TIMEOUT,
+            reveal_timeout: COMMON_TIMEOUT,
         },
     );
 
@@ -64,7 +64,7 @@ fn init_register_users_and_wait_until_move_stage<'a>(
 ) -> Program<'a> {
     let program = common_init_with_owner_and_bet(sys, owner_user, bet_size);
     register_players(&program, players, bet_size);
-    sys.spend_blocks(blocks_count(COMMON_TIMOUT + 1));
+    sys.spend_blocks(blocks_count(COMMON_TIMEOUT + 1));
 
     program
 }
@@ -235,7 +235,7 @@ pub fn failure_change_next_game_config(program: &Program, from: u64, config: Gam
 pub fn check_stop_the_game(program: &Program, from: u64, rewarded_users: &[u64]) {
     let result = program.send(from, Action::StopGame);
     let rewarded_users = rewarded_users.iter().cloned().map(Into::into).collect();
-    assert!(result.contains(&(from, Event::GameWasStopped(rewarded_users).encode())));
+    assert!(result.contains(&(from, Event::GameStopped(rewarded_users).encode())));
 }
 
 pub fn failure_stop_the_game(program: &Program, from: u64) {

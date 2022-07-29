@@ -93,11 +93,7 @@ impl GameStage {
     pub fn is_player_in_game(&self, player: &ActorId) -> bool {
         match self {
             GameStage::Preparation => false,
-            GameStage::InProgress(description) => {
-                description.anticipated_players.contains(player)
-                    || description.finished_players.contains(player)
-            }
-            GameStage::Reveal(description) => {
+            GameStage::InProgress(description) | GameStage::Reveal(description) => {
                 description.anticipated_players.contains(player)
                     || description.finished_players.contains(player)
             }
@@ -105,17 +101,11 @@ impl GameStage {
     }
 
     pub fn current_players(&self) -> Option<BTreeSet<ActorId>> {
-        let description: &StageDescription;
-
-        match self {
+        let description = match self {
             GameStage::Preparation => return None,
-            GameStage::InProgress(progress_description) => {
-                description = progress_description;
-            }
-            GameStage::Reveal(reveal_description) => {
-                description = reveal_description;
-            }
-        }
+            GameStage::InProgress(progress_description) => progress_description,
+            GameStage::Reveal(reveal_description) => reveal_description,
+        };
 
         let players = description
             .anticipated_players
@@ -216,7 +206,7 @@ pub enum Event {
     SuccessfulMove(ActorId),
     SuccessfulReveal(RevealResult),
     GameConfigChanged,
-    GameWasStopped(BTreeSet<ActorId>),
+    GameStopped(BTreeSet<ActorId>),
 }
 
 #[derive(Debug, Encode, Decode, TypeInfo)]

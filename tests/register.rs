@@ -1,5 +1,5 @@
 use gtest::System;
-use io::*;
+use rps_io::*;
 
 mod routines;
 pub use routines::*;
@@ -31,12 +31,12 @@ fn check_register_after_registration_stage_prolongation() {
 
     check_register_player(&game, USERS[0], COMMON_BET);
 
-    sys.spend_blocks(blocks_count(COMMON_TIMOUT + 1));
+    sys.spend_blocks(blocks_count(COMMON_TIMEOUT + 1));
 
     failure_register_player(&game, USERS[0], COMMON_BET);
     check_register_player(&game, USERS[1], COMMON_BET);
 
-    sys.spend_blocks(blocks_count(COMMON_TIMOUT + 1));
+    sys.spend_blocks(blocks_count(COMMON_TIMEOUT + 1));
 
     check_user_move(&game, USERS[0], Move::Rock);
     check_user_move(&game, USERS[1], Move::Paper);
@@ -50,7 +50,7 @@ fn check_register_in_progress() {
     check_register_player(&game, USERS[0], COMMON_BET);
     check_register_player(&game, USERS[1], COMMON_BET);
 
-    sys.spend_blocks(blocks_count(COMMON_TIMOUT + 1));
+    sys.spend_blocks(blocks_count(COMMON_TIMEOUT + 1));
 
     failure_register_player(&game, USERS[0], COMMON_BET);
     failure_register_player(&game, USERS[1], COMMON_BET);
@@ -71,7 +71,7 @@ fn check_register_after_first_round() {
     let sys = System::new();
     let game = common_init(&sys);
     register_players(&game, &USERS[0..3], COMMON_BET);
-    sys.spend_blocks(blocks_count(COMMON_TIMOUT + 1));
+    sys.spend_blocks(blocks_count(COMMON_TIMEOUT + 1));
     play_round(&game, &USERS[0..3], &[Move::Rock, Move::Rock, Move::Rock]);
 
     failure_register_player(&game, USERS[3], COMMON_BET);
@@ -82,7 +82,7 @@ fn check_register_after_game() {
     let sys = System::new();
     let game = common_init(&sys);
     register_players(&game, &USERS[0..3], COMMON_BET);
-    sys.spend_blocks(blocks_count(COMMON_TIMOUT + 1));
+    sys.spend_blocks(blocks_count(COMMON_TIMEOUT + 1));
     play_round(&game, &USERS[0..3], &[Move::Paper, Move::Rock, Move::Rock]);
 
     check_register_player(&game, USERS[0], COMMON_BET);

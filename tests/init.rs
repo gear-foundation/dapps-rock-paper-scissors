@@ -1,5 +1,5 @@
 use gtest::{Program, System};
-use io::*;
+use rps_io::*;
 
 mod routines;
 pub use routines::*;
@@ -40,9 +40,9 @@ pub fn init(
 #[test]
 fn check_all_users_bet() {
     let sys = System::new();
-    let entry_timout = COMMON_TIMOUT;
-    let move_timout = COMMON_TIMOUT + 1;
-    let reveal_timout = COMMON_TIMOUT + 2;
+    let entry_timout = COMMON_TIMEOUT;
+    let move_timout = COMMON_TIMEOUT + 1;
+    let reveal_timout = COMMON_TIMEOUT + 2;
 
     let game = init(
         &sys,

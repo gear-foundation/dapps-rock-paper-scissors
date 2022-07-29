@@ -7,7 +7,7 @@
 
 use gstd::ActorId;
 use gtest::System;
-use io::*;
+use rps_io::*;
 use std::collections::BTreeSet;
 
 mod routines;
@@ -20,9 +20,9 @@ fn common_config_tests() {
     let next_config = GameConfig {
         bet_size: 0,
         players_count_limit: 3,
-        entry_timeout: COMMON_TIMOUT * 2,
-        move_timeout: COMMON_TIMOUT * 3,
-        reveal_timeout: COMMON_TIMOUT * 4,
+        entry_timeout: COMMON_TIMEOUT * 2,
+        move_timeout: COMMON_TIMEOUT * 3,
+        reveal_timeout: COMMON_TIMEOUT * 4,
     };
     check_change_next_game_config(&game, USERS[0], next_config.clone());
 

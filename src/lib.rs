@@ -1,7 +1,7 @@
 #![no_std]
 
 use gstd::{debug, exec, msg, prelude::*, ActorId};
-use io::*;
+use rps_io::*;
 
 mod validations;
 use validations::validate_game_config;
@@ -87,7 +87,7 @@ impl RPSGame {
             players
         };
 
-        msg::reply(Event::GameWasStopped(players), 0).expect("Reply error");
+        msg::reply(Event::GameStopped(players), 0).expect("Reply error");
 
         self.start_new_game();
     }
@@ -104,7 +104,7 @@ unsafe extern "C" fn init() {
         owner: msg::source(),
         game_config: config,
         current_stage_start_timestamp: exec::block_timestamp(),
-        ..RPSGame::default()
+        ..Default::default()
     };
 
     RPS_GAME = Some(game);
