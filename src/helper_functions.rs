@@ -12,15 +12,12 @@ impl RPSGame {
             };
 
         if end_time < exec::block_timestamp() {
-            // match &self.stage {
-            //     GameStage::Preparation => self.handle_preparation_timeout(),
-            //     GameStage::InProgress(description) => self.handle_moves_timeout(description),
-            //     GameStage::Reveal(description) => self.handle_reveal_timeout(description),
-            // }
-            match self.stage.clone() {
+            match &self.stage {
                 GameStage::Preparation => self.handle_preparation_timeout(),
-                GameStage::InProgress(desctription) => self.handle_moves_timeout(&desctription),
-                GameStage::Reveal(desctription) => self.handle_reveal_timeout(&desctription),
+                GameStage::InProgress(_) => self.handle_moves_timeout(),
+                GameStage::Reveal(description) => {
+                    self.handle_reveal_timeout(description.finished_players.len())
+                }
             }
         }
     }
@@ -43,9 +40,9 @@ impl RPSGame {
     }
 
     pub(crate) fn try_to_transit_to_reveal_stage_after_move(&mut self) {
-        if let GameStage::InProgress(description) = self.stage.clone() {
+        if let GameStage::InProgress(description) = &self.stage {
             if description.anticipated_players.is_empty() {
-                self.transit_to_reveal_stage(&description);
+                self.transit_to_reveal_stage(description.finished_players.clone());
             }
         }
     }
@@ -57,12 +54,16 @@ impl RPSGame {
         }
     }
 
-    pub(crate) fn handle_moves_timeout(&mut self, progress_description: &StageDescription) {
-        match progress_description.finished_players.len() {
+    pub(crate) fn handle_moves_timeout(&mut self) {
+        let finished_players = match &self.stage {
+            GameStage::Preparation | GameStage::Reveal(_) => panic!("Wrong stage"),
+            GameStage::InProgress(description) => &description.finished_players,
+        };
+
+        match finished_players.len() {
             0 => self.update_timestamp(),
             1 => {
-                let winner = progress_description
-                    .finished_players
+                let winner = finished_players
                     .clone()
                     .into_iter()
                     .last()
@@ -70,12 +71,12 @@ impl RPSGame {
                 msg::send(winner, "", exec::value_available()).expect("Can't send reward");
                 self.start_new_game();
             }
-            _ => self.transit_to_reveal_stage(progress_description),
+            _ => self.transit_to_reveal_stage(finished_players.clone()),
         }
     }
 
-    pub(crate) fn handle_reveal_timeout(&mut self, progress_description: &StageDescription) {
-        match progress_description.finished_players.len() {
+    pub(crate) fn handle_reveal_timeout(&mut self, finished_players_count: usize) {
+        match finished_players_count {
             0 => self.update_timestamp(),
             _ => {
                 self.end_round();
@@ -83,9 +84,9 @@ impl RPSGame {
         }
     }
 
-    pub(crate) fn transit_to_reveal_stage(&mut self, progress_description: &StageDescription) {
+    pub(crate) fn transit_to_reveal_stage(&mut self, next_round_players: BTreeSet<ActorId>) {
         self.stage = GameStage::Reveal(StageDescription {
-            anticipated_players: progress_description.finished_players.clone(),
+            anticipated_players: next_round_players,
             finished_players: Default::default(),
         });
         self.update_timestamp();

@@ -16,6 +16,22 @@ pub const COMMON_CONFIG: GameConfig = GameConfig {
     reveal_timeout: COMMON_TIMEOUT,
 };
 
+pub trait NumberConvertable {
+    fn number(&self) -> u8;
+}
+
+impl NumberConvertable for Move {
+    fn number(&self) -> u8 {
+        match self {
+            Move::Rock => 0,
+            Move::Paper => 1,
+            Move::Scissors => 2,
+            Move::Lizard => 3,
+            Move::Spock => 4,
+        }
+    }
+}
+
 pub fn blocks_count(timout: u64) -> u32 {
     timout as _
 }

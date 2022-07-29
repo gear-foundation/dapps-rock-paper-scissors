@@ -14,16 +14,6 @@ pub enum Move {
 }
 
 impl Move {
-    pub fn number(&self) -> char {
-        match self {
-            Move::Rock => '0',
-            Move::Paper => '1',
-            Move::Scissors => '2',
-            Move::Lizard => '3',
-            Move::Spock => '4',
-        }
-    }
-
     pub fn new(number: char) -> Move {
         match number {
             '0' => Move::Rock,
