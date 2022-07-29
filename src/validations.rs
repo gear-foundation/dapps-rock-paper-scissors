@@ -31,12 +31,6 @@ impl RPSGame {
         }
     }
 
-    pub(crate) fn validate_game_is_in_progress(&self) {
-        if !self.stage.game_is_in_progress() {
-            panic!("Game is not in progress")
-        }
-    }
-
     pub(crate) fn validate_bet(&self, value: u128) {
         if self.game_config.bet_size > value {
             panic!("Not enough money for bet")

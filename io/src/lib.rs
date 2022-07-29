@@ -142,10 +142,71 @@ pub enum RevealResult {
 
 #[derive(Debug, Decode, Encode, TypeInfo)]
 pub enum Action {
+    /// Registers a player for the game.
+    /// Player must send value to be registered
+    ///
+    /// # Requirements:
+    /// * Game is not in progress yet. E.g. the `GameStage` must be `GameStage::Preparation`
+    /// * `msg::value()` is greater or equal to `bet_size` in the config(refund will return to user).
+    /// * Player not registred yet.
+    /// * Lobby is not full.
+    ///
+    /// On success replies `Event::PlayerRegistred`.
     Register,
+
+    /// Submits player's move to the program in encrypted form.
+    /// Player can't change his move after it.
+    ///
+    /// # Arguments:
+    /// * `String`: is the hex string from 256-bit blake2b hash of move("0" or "1" or "2" or "3" or "4") + "password".
+    ///
+    /// # Requirements:
+    /// * The `GameStage` must be `GameStage::InProgress(StageDesciption)` where `StageDescription::anticipated_players` must contains `msg::source()`
+    ///
+    /// On success replies `Event::SuccessfulReveal(RevealResult)` where `RevealResult` will correspond to the situation after this reveal.
     MakeMove(String),
+
+    /// Reveals the move of the player, with which players must confirm their moves.
+    /// In this step the program validates that the hash submitted during the moves stage is equal
+    /// to a hashed open string and save this move(first character from string) to determine the winners.
+    ///
+    /// # Arguments:
+    /// * `String`: is the raw string of move("0" or "1" or "2" or "3" or "4") + "password" that should be equal to string that was sent in `MakeMove(String)` without hashing.
+    ///
+    /// # Requirements:
+    /// * The hashed(by program) `Reveal` string must be equal to this round `MakeMove` string.
+    /// * The `GameStage` must be `GameStage::Reveal(StageDesciption)` where `StageDescription::anticipated_players` must contains `msg::source()`
+    ///
+    /// On success replies `Event::SuccessfulMove(ActorId)` where `ActorId` is the moved player's address.
     Reveal(String),
+
+    /// Changes the game config of the next game.
+    /// When the current game ends, this config will be applied.
+    ///
+    /// # Arguments:
+    /// * `GameConfig`: is the config that will be applied to the next game.
+    ///
+    /// # Requirements:
+    /// * The `msg::source()` must be the owner of the program.
+    /// * `players_count_limit` of the `GameConfig` must be greater than 1
+    /// * `entry_timeout` of the `GameConfig` must be greater than 5000(5 sec)
+    /// * `move_timeout` of the `GameConfig` must be greater than 5000(5 sec)
+    /// * `reveal_timeout` of the `GameConfig` must be greater than 5000(5 sec)
+    ///
+    /// On success replies `Event::GameConfigChanged`.
     ChangeNextGameConfig(GameConfig),
+
+    /// Stops the game.
+    /// This action can be used, for example, to change the configuration of the game,
+    /// or if the players have gone on strike and do not want to continue playing,
+    /// or if the game has gone on for a long time.
+    /// When the admin stops the game, all funds are distributed among the players remaining in the game.
+    /// If the game is in the registration stage, bets will be returned to the entire lobby.
+    ///
+    /// # Requirements:
+    /// * The `msg::source()` must be the owner of the program.
+    ///
+    /// On success replies `Event::GameWasStopped(BTreeSet<ActorId>)` where inside are the players who got the money.
     StopGame,
 }
 
@@ -162,7 +223,7 @@ pub enum Event {
 pub enum State {
     Config,
     LobbyList,
-    GameState,
+    GameStage,
     CurrentStageTimestamp,
 }
 
@@ -178,7 +239,7 @@ pub enum StateReply {
 pub struct GameConfig {
     pub bet_size: u128,
     pub players_count_limit: u8,
-    pub entry_timeout: u64,
-    pub move_timeout: u64,
-    pub reveal_timeout: u64,
+    pub entry_timeout: u64,  // in ms
+    pub move_timeout: u64,   // in ms
+    pub reveal_timeout: u64, // in ms
 }

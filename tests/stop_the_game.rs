@@ -77,8 +77,8 @@ fn check_not_all_players_in_progress_of_second_round() {
 #[test]
 fn check_game_is_not_in_progress() {
     let sys = System::new();
-    let game = init_and_register_with_users(&sys, USERS);
-
+    let game = common_init_with_owner_and_bet(&sys, USERS[0], COMMON_BET);
+    register_players(&game, USERS, COMMON_BET);
     check_stop_the_game(&game, USERS[0], USERS);
 }
 

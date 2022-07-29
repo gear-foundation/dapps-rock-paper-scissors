@@ -50,7 +50,7 @@ fn common_stage_tests() {
     let sys = System::new();
     let game = common_init_and_register(&sys);
 
-    if let StateReply::GameStage(stage) = game.meta_state(State::GameState).unwrap() {
+    if let StateReply::GameStage(stage) = game.meta_state(State::GameStage).unwrap() {
         match stage {
             GameStage::Preparation => {}
             GameStage::Reveal(_) | GameStage::InProgress(_) => panic!("wrong"),
@@ -61,7 +61,7 @@ fn common_stage_tests() {
 
     check_user_move(&game, USERS[0], Move::Rock);
 
-    if let StateReply::GameStage(stage) = game.meta_state(State::GameState).unwrap() {
+    if let StateReply::GameStage(stage) = game.meta_state(State::GameStage).unwrap() {
         match stage {
             GameStage::InProgress(description) => {
                 let mut anticipated = COMMON_USERS_SET

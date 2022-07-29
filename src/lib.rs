@@ -68,7 +68,6 @@ impl RPSGame {
 
     fn stop_the_game(&mut self) {
         self.validate_source_is_owner();
-        self.validate_game_is_in_progress();
 
         let players = if matches!(self.stage, GameStage::Preparation) {
             self.lobby.iter().for_each(|player| {
@@ -135,7 +134,7 @@ unsafe extern "C" fn meta_state() -> *mut [i32; 2] {
     let encoded = match query {
         State::Config => StateReply::Config(game.game_config.clone()),
         State::LobbyList => StateReply::LobbyList(game.lobby.clone().into_iter().collect()),
-        State::GameState => StateReply::GameStage(game.stage.clone()),
+        State::GameStage => StateReply::GameStage(game.stage.clone()),
         State::CurrentStageTimestamp => {
             StateReply::CurrentStageTimestamp(game.current_stage_start_timestamp)
         }
