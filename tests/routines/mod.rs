@@ -6,6 +6,7 @@ pub const USERS: &[u64] = &[3, 4, 5, 6];
 pub const COMMON_USERS_SET: &[u64] = &[3, 4, 5];
 pub const DEFAULT_PASSWORD: &str = "pass12";
 pub const COMMON_BET: u128 = 1_000_000;
+pub const START_BALANCE: u128 = 1_000_000_000;
 pub const COMMON_PLAYERS_COUNT_LIMIT: u8 = 5;
 pub const COMMON_TIMEOUT: u64 = 5_000;
 pub const COMMON_CONFIG: GameConfig = GameConfig {
@@ -45,7 +46,7 @@ pub fn common_init_with_owner_and_bet(sys: &System, owner_user: u64, bet_size: u
     USERS
         .iter()
         .copied()
-        .for_each(|id| sys.mint_to(id, 1_000_000_000));
+        .for_each(|id| sys.mint_to(id, START_BALANCE));
     let program = Program::current(sys);
     let result = program.send(
         owner_user,
@@ -80,7 +81,7 @@ fn init_register_users_and_wait_until_move_stage<'a>(
 ) -> Program<'a> {
     let program = common_init_with_owner_and_bet(sys, owner_user, bet_size);
     register_players(&program, players, bet_size);
-    sys.spend_blocks(blocks_count(COMMON_TIMEOUT + 1));
+    sys.spend_blocks(blocks_count(COMMON_TIMEOUT / 1_000 + 1));
 
     program
 }
@@ -258,4 +259,9 @@ pub fn failure_stop_the_game(program: &Program, from: u64) {
     let result = program.send(from, Action::StopGame);
 
     assert!(result.main_failed());
+}
+
+pub fn check_users_balance(sys: &System, user: &u64, balance: u128) {
+    let user_balance = sys.balance_of(*user);
+    assert_eq!(balance, user_balance);
 }

@@ -22,27 +22,31 @@ fn common() {
             reveal_timeout: COMMON_TIMEOUT * 4,
         },
     );
+
+    println!("{}", sys.block_timestamp());
+
     play_round(
         &game,
         COMMON_USERS_SET,
         &[Move::Rock, Move::Paper, Move::Rock],
     );
 
+    println!("{}", sys.block_timestamp());
     check_register_player(&game, USERS[1], 0);
     check_register_player(&game, USERS[2], 0);
     check_register_player(&game, USERS[3], 0);
     failure_register_player(&game, USERS[0], 0);
 
-    sys.spend_blocks(blocks_count(COMMON_TIMEOUT * 2));
+    sys.spend_blocks(blocks_count(COMMON_TIMEOUT * 2 / 1000));
     failure_user_move(&game, USERS[1], Move::Rock);
     sys.spend_blocks(1);
     check_user_move(&game, USERS[2], Move::Paper);
     check_user_move(&game, USERS[1], Move::Rock);
-    sys.spend_blocks(blocks_count(COMMON_TIMEOUT * 3));
+    sys.spend_blocks(blocks_count(COMMON_TIMEOUT * 3 / 1000));
     failure_user_reveal(&game, USERS[1], Move::Rock);
     sys.spend_blocks(1);
     check_user_reveal_with_continue(&game, USERS[1], Move::Rock);
-    sys.spend_blocks(blocks_count(COMMON_TIMEOUT * 4));
+    sys.spend_blocks(blocks_count(COMMON_TIMEOUT * 4 / 1000));
     failure_register_player(&game, USERS[0], 0);
     sys.spend_blocks(1);
 

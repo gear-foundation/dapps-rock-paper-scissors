@@ -58,7 +58,7 @@ fn check_all_users_bet() {
     failure_register_player(&game, USERS[3], COMMON_BET - 1);
     failure_user_move(&game, USERS[0], Move::Spock);
 
-    sys.spend_blocks(blocks_count(entry_timout));
+    sys.spend_blocks(blocks_count(entry_timout / 1_000));
     failure_user_move(&game, USERS[0], Move::Spock);
     sys.spend_blocks(1);
     check_user_move(&game, USERS[0], Move::Spock);
@@ -67,13 +67,13 @@ fn check_all_users_bet() {
     failure_user_move(&game, USERS[3], Move::Spock);
 
     failure_user_reveal(&game, USERS[0], Move::Spock);
-    sys.spend_blocks(blocks_count(move_timout));
+    sys.spend_blocks(blocks_count(move_timout / 1_000));
     failure_user_reveal(&game, USERS[0], Move::Spock);
     sys.spend_blocks(1);
     check_user_reveal_with_continue(&game, USERS[0], Move::Spock);
     failure_user_reveal(&game, USERS[2], Move::Lizard);
     failure_user_reveal(&game, USERS[1], Move::Lizard);
-    sys.spend_blocks(blocks_count(reveal_timout));
+    sys.spend_blocks(blocks_count(reveal_timout / 1_000));
     sys.spend_blocks(1);
 
     register_players(&game, &USERS[0..3], COMMON_BET);
