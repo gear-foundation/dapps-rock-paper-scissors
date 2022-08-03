@@ -16,7 +16,7 @@ struct RPSGame {
     lobby: BTreeSet<ActorId>,
     game_config: GameConfig,
     stage: GameStage,
-    encrypted_moves: BTreeMap<ActorId, String>,
+    encrypted_moves: BTreeMap<ActorId, [u8; 32]>,
     player_moves: BTreeMap<ActorId, Move>,
     next_game_config: Option<GameConfig>,
     current_stage_start_timestamp: u64,
@@ -35,7 +35,7 @@ impl RPSGame {
         msg::reply(Event::PlayerRegistred, change).expect("Can't send reply");
     }
 
-    fn make_move(&mut self, move_hash: String) {
+    fn make_move(&mut self, move_hash: Vec<u8>) {
         let player_id = &msg::source();
         self.validate_player_can_make_a_move(player_id);
 
@@ -45,11 +45,11 @@ impl RPSGame {
         msg::reply(Event::SuccessfulMove(*player_id), 0).expect("Reply error");
     }
 
-    fn reveal(&mut self, real_move: &str) {
+    fn reveal(&mut self, real_move: Vec<u8>) {
         let player = &msg::source();
 
         self.validate_player_can_reveal(player);
-        self.validate_reveal(player, real_move);
+        self.validate_reveal(player, real_move.as_slice());
 
         self.save_real_move(player, real_move);
         let result = self.end_round_if_needed();
@@ -120,7 +120,7 @@ unsafe extern "C" fn handle() {
     match action {
         Action::Register => game.register(),
         Action::MakeMove(hashed_move) => game.make_move(hashed_move),
-        Action::Reveal(real_move) => game.reveal(real_move.as_str()),
+        Action::Reveal(real_move) => game.reveal(real_move),
         Action::ChangeNextGameConfig(config) => game.set_next_game_config(config),
         Action::StopGame => game.stop_the_game(),
     }

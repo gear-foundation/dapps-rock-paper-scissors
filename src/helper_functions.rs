@@ -22,13 +22,6 @@ impl RPSGame {
         }
     }
 
-    pub(crate) fn bytes_to_hex_string(bytes: [u8; 32]) -> String {
-        bytes
-            .iter()
-            .map(|b| format!("{:02x}", b))
-            .collect::<String>()
-    }
-
     pub(crate) fn transit_to_in_progress_stage_from_preparation(&mut self) {
         let progress_description = StageDescription {
             anticipated_players: self.lobby.clone(),
@@ -157,18 +150,19 @@ impl RPSGame {
         set_of_moves
     }
 
-    pub(crate) fn save_move(&mut self, player: &ActorId, move_hash: String) {
+    pub(crate) fn save_move(&mut self, player: &ActorId, move_hash: Vec<u8>) {
         if let GameStage::InProgress(progress_description) = &mut self.stage {
-            self.encrypted_moves.insert(*player, move_hash);
+            self.encrypted_moves
+                .insert(*player, move_hash.try_into().expect("wrong format"));
 
             progress_description.anticipated_players.remove(player);
             progress_description.finished_players.insert(*player);
         }
     }
 
-    pub(crate) fn save_real_move(&mut self, player: &ActorId, real_move: &str) {
-        let users_move = real_move.chars().next().expect("Move is empty");
-        let users_move = Move::new(users_move);
+    pub(crate) fn save_real_move(&mut self, player: &ActorId, real_move: Vec<u8>) {
+        let users_move = real_move.first().expect("Move is empty");
+        let users_move = Move::new(*users_move);
 
         self.player_moves.insert(*player, users_move);
 

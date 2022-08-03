@@ -14,14 +14,14 @@ pub enum Move {
 }
 
 impl Move {
-    pub fn new(number: char) -> Move {
+    pub fn new(number: u8) -> Move {
         match number {
-            '0' => Move::Rock,
-            '1' => Move::Paper,
-            '2' => Move::Scissors,
-            '3' => Move::Lizard,
-            '4' => Move::Spock,
-            _ => panic!("Unknown symbol in move"),
+            b'0' => Move::Rock,
+            b'1' => Move::Paper,
+            b'2' => Move::Scissors,
+            b'3' => Move::Lizard,
+            b'4' => Move::Spock,
+            _ => panic!("Unknown symbol in move, {number}"),
         }
     }
 
@@ -138,27 +138,27 @@ pub enum Action {
     /// Player can't change his move after it.
     ///
     /// # Arguments:
-    /// * `String`: is the hex string from 256-bit blake2b hash of move("0" or "1" or "2" or "3" or "4") + "password".
+    /// * `Vec<u8>`: is the binary 256-bit blake2b hash of move("0" or "1" or "2" or "3" or "4") + "password".
     ///
     /// # Requirements:
     /// * The `GameStage` must be `GameStage::InProgress(StageDesciption)` where `StageDescription::anticipated_players` must contains `msg::source()`
     ///
     /// On success replies `Event::SuccessfulReveal(RevealResult)` where `RevealResult` will correspond to the situation after this reveal.
-    MakeMove(String),
+    MakeMove(Vec<u8>),
 
     /// Reveals the move of the player, with which players must confirm their moves.
     /// In this step the program validates that the hash submitted during the moves stage is equal
     /// to a hashed open string and save this move(first character from string) to determine the winners.
     ///
     /// # Arguments:
-    /// * `String`: is the raw string of move("0" or "1" or "2" or "3" or "4") + "password" that should be equal to string that was sent in `MakeMove(String)` without hashing.
+    /// * `Vec<u8>`: is the binary move("0" or "1" or "2" or "3" or "4") + "password" that should be equal to binary that was sent in `MakeMove(Vec<u8>)` without hashing.
     ///
     /// # Requirements:
-    /// * The hashed(by program) `Reveal` string must be equal to this round `MakeMove` string.
+    /// * The hashed(by program) `Reveal` binary must be equal to this round `MakeMove` binary.
     /// * The `GameStage` must be `GameStage::Reveal(StageDesciption)` where `StageDescription::anticipated_players` must contains `msg::source()`
     ///
     /// On success replies `Event::SuccessfulMove(ActorId)` where `ActorId` is the moved player's address.
-    Reveal(String),
+    Reveal(Vec<u8>),
 
     /// Changes the game config of the next game.
     /// When the current game ends, this config will be applied.

@@ -69,16 +69,15 @@ impl RPSGame {
         };
     }
 
-    pub(crate) fn validate_reveal(&self, player: &ActorId, real_move: &str) {
-        let saved_move = self
+    pub(crate) fn validate_reveal(&self, player: &ActorId, real_move: &[u8]) {
+        let saved_move_bytes = self
             .encrypted_moves
             .get(player)
             .expect("Can't find a move of this player");
 
-        let hash_bytes = sp_core_hashing::blake2_256(real_move.as_bytes());
-        let hex_hash = Self::bytes_to_hex_string(hash_bytes);
+        let hash_bytes = sp_core_hashing::blake2_256(real_move);
 
-        if &hex_hash != saved_move {
+        if &hash_bytes != saved_move_bytes {
             panic!("Player tries to cheat")
         }
     }
