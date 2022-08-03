@@ -15,9 +15,9 @@ fn timeout_on_preparation_without_users() {
         GameConfig {
             bet_size: 0,
             players_count_limit: 2,
-            entry_timeout: COMMON_TIMEOUT * 2,
-            move_timeout: COMMON_TIMEOUT * 3,
-            reveal_timeout: COMMON_TIMEOUT * 4,
+            entry_timeout_ms: COMMON_TIMEOUT * 2,
+            move_timeout_ms: COMMON_TIMEOUT * 3,
+            reveal_timeout_ms: COMMON_TIMEOUT * 4,
         },
     );
 
@@ -42,9 +42,9 @@ fn timeout_on_preparation_with_one_users() {
         GameConfig {
             bet_size: 0,
             players_count_limit: 2,
-            entry_timeout: COMMON_TIMEOUT * 2,
-            move_timeout: COMMON_TIMEOUT * 3,
-            reveal_timeout: COMMON_TIMEOUT * 4,
+            entry_timeout_ms: COMMON_TIMEOUT * 2,
+            move_timeout_ms: COMMON_TIMEOUT * 3,
+            reveal_timeout_ms: COMMON_TIMEOUT * 4,
         },
     );
 
@@ -70,9 +70,9 @@ fn timeout_on_preparation_with_two_users() {
         GameConfig {
             bet_size: 0,
             players_count_limit: 3,
-            entry_timeout: COMMON_TIMEOUT * 2,
-            move_timeout: COMMON_TIMEOUT * 3,
-            reveal_timeout: COMMON_TIMEOUT * 4,
+            entry_timeout_ms: COMMON_TIMEOUT * 2,
+            move_timeout_ms: COMMON_TIMEOUT * 3,
+            reveal_timeout_ms: COMMON_TIMEOUT * 4,
         },
     );
 

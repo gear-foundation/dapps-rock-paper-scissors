@@ -17,9 +17,9 @@ fn common() {
         GameConfig {
             bet_size: 0,
             players_count_limit: 3,
-            entry_timeout: COMMON_TIMEOUT * 2,
-            move_timeout: COMMON_TIMEOUT * 3,
-            reveal_timeout: COMMON_TIMEOUT * 4,
+            entry_timeout_ms: COMMON_TIMEOUT * 2,
+            move_timeout_ms: COMMON_TIMEOUT * 3,
+            reveal_timeout_ms: COMMON_TIMEOUT * 4,
         },
     );
 
@@ -64,9 +64,9 @@ fn check_round_start() {
         GameConfig {
             bet_size: 0,
             players_count_limit: 3,
-            entry_timeout: COMMON_TIMEOUT * 2,
-            move_timeout: COMMON_TIMEOUT * 3,
-            reveal_timeout: COMMON_TIMEOUT * 4,
+            entry_timeout_ms: COMMON_TIMEOUT * 2,
+            move_timeout_ms: COMMON_TIMEOUT * 3,
+            reveal_timeout_ms: COMMON_TIMEOUT * 4,
         },
     );
 
@@ -87,9 +87,9 @@ fn check_two_times() {
         GameConfig {
             bet_size: 0,
             players_count_limit: 3,
-            entry_timeout: COMMON_TIMEOUT * 2,
-            move_timeout: COMMON_TIMEOUT * 3,
-            reveal_timeout: COMMON_TIMEOUT * 4,
+            entry_timeout_ms: COMMON_TIMEOUT * 2,
+            move_timeout_ms: COMMON_TIMEOUT * 3,
+            reveal_timeout_ms: COMMON_TIMEOUT * 4,
         },
     );
 
@@ -105,9 +105,9 @@ fn check_two_times() {
         GameConfig {
             bet_size: 500,
             players_count_limit: 4,
-            entry_timeout: COMMON_TIMEOUT,
-            move_timeout: COMMON_TIMEOUT,
-            reveal_timeout: COMMON_TIMEOUT,
+            entry_timeout_ms: COMMON_TIMEOUT,
+            move_timeout_ms: COMMON_TIMEOUT,
+            reveal_timeout_ms: COMMON_TIMEOUT,
         },
     );
 
@@ -141,9 +141,9 @@ fn check_twice_in_a_row() {
         GameConfig {
             bet_size: 0,
             players_count_limit: 3,
-            entry_timeout: COMMON_TIMEOUT * 2,
-            move_timeout: COMMON_TIMEOUT * 3,
-            reveal_timeout: COMMON_TIMEOUT * 4,
+            entry_timeout_ms: COMMON_TIMEOUT * 2,
+            move_timeout_ms: COMMON_TIMEOUT * 3,
+            reveal_timeout_ms: COMMON_TIMEOUT * 4,
         },
     );
 
@@ -153,9 +153,9 @@ fn check_twice_in_a_row() {
         GameConfig {
             bet_size: 500,
             players_count_limit: 4,
-            entry_timeout: COMMON_TIMEOUT,
-            move_timeout: COMMON_TIMEOUT,
-            reveal_timeout: COMMON_TIMEOUT,
+            entry_timeout_ms: COMMON_TIMEOUT,
+            move_timeout_ms: COMMON_TIMEOUT,
+            reveal_timeout_ms: COMMON_TIMEOUT,
         },
     );
 
@@ -184,9 +184,9 @@ fn failure_with_wrong_timouts() {
         GameConfig {
             bet_size: 500,
             players_count_limit: 4,
-            entry_timeout: 4999,
-            move_timeout: COMMON_TIMEOUT,
-            reveal_timeout: COMMON_TIMEOUT,
+            entry_timeout_ms: 4999,
+            move_timeout_ms: COMMON_TIMEOUT,
+            reveal_timeout_ms: COMMON_TIMEOUT,
         },
     );
     failure_change_next_game_config(
@@ -195,9 +195,9 @@ fn failure_with_wrong_timouts() {
         GameConfig {
             bet_size: 500,
             players_count_limit: 4,
-            entry_timeout: COMMON_TIMEOUT,
-            move_timeout: 4999,
-            reveal_timeout: COMMON_TIMEOUT,
+            entry_timeout_ms: COMMON_TIMEOUT,
+            move_timeout_ms: 4999,
+            reveal_timeout_ms: COMMON_TIMEOUT,
         },
     );
     failure_change_next_game_config(
@@ -206,9 +206,9 @@ fn failure_with_wrong_timouts() {
         GameConfig {
             bet_size: 500,
             players_count_limit: 4,
-            entry_timeout: COMMON_TIMEOUT,
-            move_timeout: COMMON_TIMEOUT,
-            reveal_timeout: 4999,
+            entry_timeout_ms: COMMON_TIMEOUT,
+            move_timeout_ms: COMMON_TIMEOUT,
+            reveal_timeout_ms: 4999,
         },
     );
 }
@@ -224,9 +224,9 @@ fn failure_with_not_owners_request() {
         GameConfig {
             bet_size: 500,
             players_count_limit: 4,
-            entry_timeout: COMMON_TIMEOUT,
-            move_timeout: COMMON_TIMEOUT,
-            reveal_timeout: COMMON_TIMEOUT,
+            entry_timeout_ms: COMMON_TIMEOUT,
+            move_timeout_ms: COMMON_TIMEOUT,
+            reveal_timeout_ms: COMMON_TIMEOUT,
         },
     );
 }
@@ -242,9 +242,9 @@ fn failure_with_inappropriate_users_limit() {
         GameConfig {
             bet_size: 500,
             players_count_limit: 2,
-            entry_timeout: COMMON_TIMEOUT,
-            move_timeout: COMMON_TIMEOUT,
-            reveal_timeout: COMMON_TIMEOUT,
+            entry_timeout_ms: COMMON_TIMEOUT,
+            move_timeout_ms: COMMON_TIMEOUT,
+            reveal_timeout_ms: COMMON_TIMEOUT,
         },
     );
 
@@ -254,9 +254,9 @@ fn failure_with_inappropriate_users_limit() {
         GameConfig {
             bet_size: 500,
             players_count_limit: 1,
-            entry_timeout: COMMON_TIMEOUT,
-            move_timeout: COMMON_TIMEOUT,
-            reveal_timeout: COMMON_TIMEOUT,
+            entry_timeout_ms: COMMON_TIMEOUT,
+            move_timeout_ms: COMMON_TIMEOUT,
+            reveal_timeout_ms: COMMON_TIMEOUT,
         },
     );
 }

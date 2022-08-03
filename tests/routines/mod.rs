@@ -12,9 +12,9 @@ pub const COMMON_TIMEOUT: u64 = 5_000;
 pub const COMMON_CONFIG: GameConfig = GameConfig {
     bet_size: COMMON_BET,
     players_count_limit: COMMON_PLAYERS_COUNT_LIMIT,
-    entry_timeout: COMMON_TIMEOUT,
-    move_timeout: COMMON_TIMEOUT,
-    reveal_timeout: COMMON_TIMEOUT,
+    entry_timeout_ms: COMMON_TIMEOUT,
+    move_timeout_ms: COMMON_TIMEOUT,
+    reveal_timeout_ms: COMMON_TIMEOUT,
 };
 
 pub trait NumberConvertable {
@@ -53,9 +53,9 @@ pub fn common_init_with_owner_and_bet(sys: &System, owner_user: u64, bet_size: u
         GameConfig {
             bet_size,
             players_count_limit: COMMON_PLAYERS_COUNT_LIMIT,
-            entry_timeout: COMMON_TIMEOUT,
-            move_timeout: COMMON_TIMEOUT,
-            reveal_timeout: COMMON_TIMEOUT,
+            entry_timeout_ms: COMMON_TIMEOUT,
+            move_timeout_ms: COMMON_TIMEOUT,
+            reveal_timeout_ms: COMMON_TIMEOUT,
         },
     );
 

@@ -6,9 +6,9 @@ impl RPSGame {
     pub(crate) fn change_stage_by_timeout_if_needed(&mut self) {
         let end_time = self.current_stage_start_timestamp
             + match self.stage {
-                GameStage::Preparation => self.game_config.entry_timeout,
-                GameStage::InProgress(_) => self.game_config.move_timeout,
-                GameStage::Reveal(_) => self.game_config.reveal_timeout,
+                GameStage::Preparation => self.game_config.entry_timeout_ms,
+                GameStage::InProgress(_) => self.game_config.move_timeout_ms,
+                GameStage::Reveal(_) => self.game_config.reveal_timeout_ms,
             };
 
         if end_time < exec::block_timestamp() {
@@ -56,10 +56,7 @@ impl RPSGame {
         match finished_players.len() {
             0 => self.update_timestamp(),
             1 => {
-                let winner = finished_players
-                    .into_iter()
-                    .last()
-                    .expect("Unknown winner");
+                let winner = finished_players.iter().last().expect("Unknown winner");
                 msg::send(*winner, "", exec::value_available()).expect("Can't send reward");
                 self.start_new_game();
             }

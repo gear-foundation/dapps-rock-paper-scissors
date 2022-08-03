@@ -88,15 +88,15 @@ pub(crate) fn validate_game_config(config: &GameConfig) {
         panic!("Players count limit is too low")
     }
 
-    if config.entry_timeout < MIN_TIMEOUT_MS {
+    if config.entry_timeout_ms < MIN_TIMEOUT_MS {
         panic!("Entry timeout is too low")
     }
 
-    if config.move_timeout < MIN_TIMEOUT_MS {
+    if config.move_timeout_ms < MIN_TIMEOUT_MS {
         panic!("Move timeout is too low")
     }
 
-    if config.reveal_timeout < MIN_TIMEOUT_MS {
+    if config.reveal_timeout_ms < MIN_TIMEOUT_MS {
         panic!("Reveal timeout is too low")
     }
 }
