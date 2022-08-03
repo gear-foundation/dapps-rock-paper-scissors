@@ -57,11 +57,10 @@ impl RPSGame {
             0 => self.update_timestamp(),
             1 => {
                 let winner = finished_players
-                    .clone()
                     .into_iter()
                     .last()
                     .expect("Unknown winner");
-                msg::send(winner, "", exec::value_available()).expect("Can't send reward");
+                msg::send(*winner, "", exec::value_available()).expect("Can't send reward");
                 self.start_new_game();
             }
             _ => self.transit_to_reveal_stage(finished_players.clone()),

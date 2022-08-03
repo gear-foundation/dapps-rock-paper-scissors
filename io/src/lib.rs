@@ -192,7 +192,7 @@ pub enum Action {
 
 #[derive(Debug, Encode, Decode, TypeInfo)]
 pub enum Event {
-    PlayerRegistred,
+    PlayerRegistered,
     SuccessfulMove(ActorId),
     SuccessfulReveal(RevealResult),
     GameConfigChanged,
@@ -219,7 +219,7 @@ pub enum StateReply {
 pub struct GameConfig {
     pub bet_size: u128,
     pub players_count_limit: u8,
-    pub entry_timeout: u64,  // in ms
-    pub move_timeout: u64,   // in ms
-    pub reveal_timeout: u64, // in ms
+    pub entry_timeout_ms: u64,
+    pub move_timeout_ms: u64,
+    pub reveal_timeout_ms: u64,
 }

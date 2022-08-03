@@ -220,7 +220,7 @@ fn try_to_reveal_with_password(
 pub fn check_register_player(program: &Program, from: u64, bet: u128) {
     let result = program.send_with_value(from, Action::Register, bet);
 
-    assert!(result.contains(&(from, Event::PlayerRegistred.encode())));
+    assert!(result.contains(&(from, Event::PlayerRegistered.encode())));
 }
 
 pub fn failure_register_player(program: &Program, from: u64, bet: u128) {

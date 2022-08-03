@@ -32,7 +32,7 @@ impl RPSGame {
         let change = msg::value() - self.game_config.bet_size;
         self.lobby.insert(msg::source());
 
-        msg::reply(Event::PlayerRegistred, change).expect("Can't send reply");
+        msg::reply(Event::PlayerRegistered, change).expect("Can't send reply");
     }
 
     fn make_move(&mut self, move_hash: Vec<u8>) {
