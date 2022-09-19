@@ -1,6 +1,7 @@
 use gstd::{prelude::*, ActorId, Encode};
 use gtest::{Program, RunResult, System};
 use rps_io::*;
+use std::string::ToString;
 
 pub const USERS: &[u64] = &[3, 4, 5, 6];
 pub const COMMON_USERS_SET: &[u64] = &[3, 4, 5];
@@ -9,13 +10,6 @@ pub const COMMON_BET: u128 = 1_000_000;
 pub const START_BALANCE: u128 = 1_000_000_000;
 pub const COMMON_PLAYERS_COUNT_LIMIT: u8 = 5;
 pub const COMMON_TIMEOUT: u64 = 5_000;
-pub const COMMON_CONFIG: GameConfig = GameConfig {
-    bet_size: COMMON_BET,
-    players_count_limit: COMMON_PLAYERS_COUNT_LIMIT,
-    entry_timeout_ms: COMMON_TIMEOUT,
-    move_timeout_ms: COMMON_TIMEOUT,
-    reveal_timeout_ms: COMMON_TIMEOUT,
-};
 
 pub trait NumberConvertable {
     fn number(&self) -> u8;
@@ -33,6 +27,17 @@ impl NumberConvertable for Move {
     }
 }
 
+pub fn common_config() -> GameConfig {
+    GameConfig {
+        name: "".to_string(),
+        bet_size: COMMON_BET,
+        players_count_limit: COMMON_PLAYERS_COUNT_LIMIT,
+        entry_timeout_ms: COMMON_TIMEOUT,
+        move_timeout_ms: COMMON_TIMEOUT,
+        reveal_timeout_ms: COMMON_TIMEOUT,
+    }
+}
+
 pub fn blocks_count(timout: u64) -> u32 {
     timout as _
 }
@@ -42,22 +47,24 @@ pub fn common_init(sys: &System) -> Program {
 }
 
 pub fn common_init_with_owner_and_bet(sys: &System, owner_user: u64, bet_size: u128) -> Program {
+    init_with_config(
+        sys,
+        owner_user,
+        GameConfig {
+            bet_size,
+            ..common_config()
+        },
+    )
+}
+
+fn init_with_config(sys: &System, owner_user: u64, config: GameConfig) -> Program {
     sys.init_logger();
     USERS
         .iter()
         .copied()
         .for_each(|id| sys.mint_to(id, START_BALANCE));
     let program = Program::current(sys);
-    let result = program.send(
-        owner_user,
-        GameConfig {
-            bet_size,
-            players_count_limit: COMMON_PLAYERS_COUNT_LIMIT,
-            entry_timeout_ms: COMMON_TIMEOUT,
-            move_timeout_ms: COMMON_TIMEOUT,
-            reveal_timeout_ms: COMMON_TIMEOUT,
-        },
-    );
+    let result = program.send(owner_user, config);
 
     assert!(!result.main_failed());
     assert!(result.log().is_empty());

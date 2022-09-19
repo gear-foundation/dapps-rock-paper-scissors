@@ -18,6 +18,7 @@ fn common_config_tests() {
     let sys = System::new();
     let game = common_init_and_register(&sys);
     let next_config = GameConfig {
+        name: "1".to_string(),
         bet_size: 0,
         players_count_limit: 3,
         entry_timeout_ms: COMMON_TIMEOUT * 2,
@@ -27,7 +28,7 @@ fn common_config_tests() {
     check_change_next_game_config(&game, USERS[0], next_config.clone());
 
     if let StateReply::Config(config) = game.meta_state(State::Config).unwrap() {
-        assert_eq!(config, COMMON_CONFIG);
+        assert_eq!(config, common_config());
     } else {
         panic!("not suitable reply")
     }

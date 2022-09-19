@@ -15,6 +15,7 @@ fn common() {
         &game,
         USERS[0],
         GameConfig {
+            name: "1".to_string(),
             bet_size: 0,
             players_count_limit: 3,
             entry_timeout_ms: COMMON_TIMEOUT * 2,
@@ -62,6 +63,7 @@ fn check_round_start() {
         &game,
         USERS[0],
         GameConfig {
+            name: "1".to_string(),
             bet_size: 0,
             players_count_limit: 3,
             entry_timeout_ms: COMMON_TIMEOUT * 2,
@@ -85,6 +87,7 @@ fn check_two_times() {
         &game,
         USERS[0],
         GameConfig {
+            name: "1".to_string(),
             bet_size: 0,
             players_count_limit: 3,
             entry_timeout_ms: COMMON_TIMEOUT * 2,
@@ -103,6 +106,7 @@ fn check_two_times() {
         &game,
         USERS[0],
         GameConfig {
+            name: "1".to_string(),
             bet_size: 500,
             players_count_limit: 4,
             entry_timeout_ms: COMMON_TIMEOUT,
@@ -139,6 +143,7 @@ fn check_twice_in_a_row() {
         &game,
         USERS[0],
         GameConfig {
+            name: "1".to_string(),
             bet_size: 0,
             players_count_limit: 3,
             entry_timeout_ms: COMMON_TIMEOUT * 2,
@@ -151,6 +156,7 @@ fn check_twice_in_a_row() {
         &game,
         USERS[0],
         GameConfig {
+            name: "2".to_string(),
             bet_size: 500,
             players_count_limit: 4,
             entry_timeout_ms: COMMON_TIMEOUT,
@@ -182,6 +188,7 @@ fn failure_with_wrong_timouts() {
         &game,
         USERS[0],
         GameConfig {
+            name: "1".to_string(),
             bet_size: 500,
             players_count_limit: 4,
             entry_timeout_ms: 4999,
@@ -193,6 +200,7 @@ fn failure_with_wrong_timouts() {
         &game,
         USERS[0],
         GameConfig {
+            name: "1".to_string(),
             bet_size: 500,
             players_count_limit: 4,
             entry_timeout_ms: COMMON_TIMEOUT,
@@ -204,6 +212,7 @@ fn failure_with_wrong_timouts() {
         &game,
         USERS[0],
         GameConfig {
+            name: "1".to_string(),
             bet_size: 500,
             players_count_limit: 4,
             entry_timeout_ms: COMMON_TIMEOUT,
@@ -222,6 +231,7 @@ fn failure_with_not_owners_request() {
         &game,
         USERS[1],
         GameConfig {
+            name: "1".to_string(),
             bet_size: 500,
             players_count_limit: 4,
             entry_timeout_ms: COMMON_TIMEOUT,
@@ -240,6 +250,7 @@ fn failure_with_inappropriate_users_limit() {
         &game,
         USERS[0],
         GameConfig {
+            name: "1".to_string(),
             bet_size: 500,
             players_count_limit: 2,
             entry_timeout_ms: COMMON_TIMEOUT,
@@ -252,6 +263,7 @@ fn failure_with_inappropriate_users_limit() {
         &game,
         USERS[0],
         GameConfig {
+            name: "1".to_string(),
             bet_size: 500,
             players_count_limit: 1,
             entry_timeout_ms: COMMON_TIMEOUT,
