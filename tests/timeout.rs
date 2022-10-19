@@ -13,6 +13,7 @@ fn timeout_on_preparation_without_users() {
         &game,
         USERS[0],
         GameConfig {
+            name: "1".to_string(),
             bet_size: 0,
             players_count_limit: 2,
             entry_timeout_ms: COMMON_TIMEOUT * 2,
@@ -40,6 +41,7 @@ fn timeout_on_preparation_with_one_users() {
         &game,
         USERS[0],
         GameConfig {
+            name: "1".to_string(),
             bet_size: 0,
             players_count_limit: 2,
             entry_timeout_ms: COMMON_TIMEOUT * 2,
@@ -68,6 +70,7 @@ fn timeout_on_preparation_with_two_users() {
         &game,
         USERS[0],
         GameConfig {
+            name: "1".to_string(),
             bet_size: 0,
             players_count_limit: 3,
             entry_timeout_ms: COMMON_TIMEOUT * 2,

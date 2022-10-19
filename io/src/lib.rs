@@ -215,6 +215,7 @@ pub enum StateReply {
 
 #[derive(Debug, Default, Clone, Encode, Decode, TypeInfo, PartialEq)]
 pub struct GameConfig {
+    pub name: String,
     pub bet_size: u128,
     pub players_count_limit: u8,
     pub entry_timeout_ms: u64,

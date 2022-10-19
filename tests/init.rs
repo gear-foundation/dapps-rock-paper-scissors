@@ -23,6 +23,7 @@ pub fn init(
     let result = program.send(
         owner_user,
         GameConfig {
+            name: "1".to_string(),
             bet_size,
             players_count_limit,
             entry_timeout_ms,
