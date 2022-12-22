@@ -74,7 +74,7 @@ impl RPSGame {
                 msg::send(*player, "STOP", self.game_config.bet_size).expect("Can't send reward");
             });
 
-            self.lobby.clone()
+            self.lobby.iter().copied().collect()
         } else {
             let players = self.stage.current_players().expect("Game is not started");
 
