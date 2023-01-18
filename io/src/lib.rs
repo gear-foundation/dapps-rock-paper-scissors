@@ -1,8 +1,20 @@
 #![no_std]
 
+use gmeta::Metadata;
 use gstd::{prelude::*, ActorId};
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
+pub struct ContractMetadata;
+
+impl Metadata for ContractMetadata {
+    type Init = ();
+    type Handle = ();
+    type Reply = ();
+    type Others = ();
+    type Signal = ();
+    type State = ContractState;
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, TypeInfo)]
 pub enum Move {
     Rock,
     Paper,
@@ -214,10 +226,26 @@ pub enum StateReply {
 }
 
 #[derive(Debug, Default, Clone, Encode, Decode, TypeInfo, PartialEq)]
+#[codec(crate = gstd::codec)]
+#[scale_info(crate = gstd::scale_info)]
 pub struct GameConfig {
     pub bet_size: u128,
     pub players_count_limit: u8,
     pub entry_timeout_ms: u64,
     pub move_timeout_ms: u64,
     pub reveal_timeout_ms: u64,
+}
+
+#[derive(Debug, Default, Encode, Decode, TypeInfo)]
+#[codec(crate = gstd::codec)]
+#[scale_info(crate = gstd::scale_info)]
+pub struct ContractState {
+    pub owner: ActorId,
+    pub lobby: Vec<ActorId>,
+    pub game_config: GameConfig,
+    pub stage: GameStage,
+    pub encrypted_moves: Vec<(ActorId, [u8; 32])>,
+    pub player_moves: Vec<(ActorId, Move)>,
+    pub next_game_config: Option<GameConfig>,
+    pub current_stage_start_timestamp: u64,
 }
