@@ -191,15 +191,3 @@ extern "C" fn metahash() {
 fn reply(payload: impl Encode) -> GstdResult<MessageId> {
     msg::reply(payload, 0)
 }
-
-gstd::metadata! {
-    title: "RockPaperScissors",
-    init:
-        input: GameConfig,
-    handle:
-        input: Action,
-        output: Event,
-    state:
-        input: State,
-        output: StateReply,
-}

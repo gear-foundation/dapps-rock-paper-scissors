@@ -226,8 +226,6 @@ pub enum StateReply {
 }
 
 #[derive(Debug, Default, Clone, Encode, Decode, TypeInfo, PartialEq)]
-#[codec(crate = gstd::codec)]
-#[scale_info(crate = gstd::scale_info)]
 pub struct GameConfig {
     pub bet_size: u128,
     pub players_count_limit: u8,
@@ -237,8 +235,6 @@ pub struct GameConfig {
 }
 
 #[derive(Debug, Default, Encode, Decode, TypeInfo)]
-#[codec(crate = gstd::codec)]
-#[scale_info(crate = gstd::scale_info)]
 pub struct ContractState {
     pub owner: ActorId,
     pub lobby: Vec<ActorId>,
