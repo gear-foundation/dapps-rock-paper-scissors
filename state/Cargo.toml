@@ -11,8 +11,7 @@ gmeta = { git = "https://github.com/gear-tech/gear.git", features = ["codegen"] 
 rps-io = { path = "../io" }
 
 [build-dependencies]
-# TODO: pin to the "stable" branch before the merge.
-gear-wasm-builder = { git = "https://github.com/gear-tech/gear.git", features = ["metawasm"] }
+gear-wasm-builder = { git = "https://github.com/gear-tech/gear.git", features = ["metawasm"], branch = "stable" }
 
 [features]
 binary-vendor = []
