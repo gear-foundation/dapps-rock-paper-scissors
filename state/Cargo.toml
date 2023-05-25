@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 gstd = { git = "https://github.com/gear-tech/gear.git", rev = "5c685d0f15c412ab6ee019ceaf7ce084426dfb68" }
-gear-lib = { git = "https://github.com/gear-dapps/gear-lib.git", tag = "0.3.6" }
+gear-lib = { git = "https://github.com/gear-dapps/gear-lib.git", tag = "0.3.7" }
 gmeta = { git = "https://github.com/gear-tech/gear.git", rev = "5c685d0f15c412ab6ee019ceaf7ce084426dfb68", features = ["codegen"] }
 rps-io = { path = "../io" }
 
