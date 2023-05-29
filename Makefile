@@ -1,4 +1,4 @@
-.PHONY: all build clean fmt fmt-check init linter pre-commit test full-test
+.PHONY: all build clean fmt fmt-check init lint pre-commit test full-test
 
 all: init build full-test
 
