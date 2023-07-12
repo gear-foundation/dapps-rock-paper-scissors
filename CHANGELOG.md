@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## [0.1.4] - 2023-07-05
-- Pin crates to 946ac47 revision
+- Pin crates to `946ac47` revision
 
 ## [0.1.3] - 2023-05-27
 - Pin crates to 78dfa07 revision
